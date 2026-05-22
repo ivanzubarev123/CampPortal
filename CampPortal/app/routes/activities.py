@@ -5,8 +5,6 @@ from datetime import date
 from app import models, schemas
 from app.database import get_db
 from app.auth import get_current_user, require_role
-#проверка2
-
 
 router = APIRouter()
 
@@ -89,3 +87,17 @@ def delete_activity(activity_id: int, db: Session = Depends(get_db), current_use
     db.delete(act)
     db.commit()
     return {"ok": True}
+
+@router.get("/{activity_id}/groups", response_model=List[schemas.GroupOut])
+def get_activity_groups(
+    activity_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)  # авторизованный, без дополнительных прав
+):
+    activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    groups = db.query(models.Group).join(models.ActivityParticipant).filter(
+        models.ActivityParticipant.activity_id == activity_id
+    ).all()
+    return groups

@@ -113,3 +113,41 @@ def remove_staff(group_id: int, user_id: int, db: Session = Depends(get_db), cur
     db.delete(gs)
     db.commit()
     return {"ok": True}
+
+@router.get("/my-group")
+def get_my_group(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    if current_user.role != "teacher":
+        raise HTTPException(status_code=403, detail="Only teacher can access")
+    group_staff = db.query(models.GroupStaff).filter(models.GroupStaff.user_id == current_user.id).first()
+    if not group_staff:
+        raise HTTPException(status_code=404, detail="You are not assigned to any group")
+    group = db.query(models.Group).filter(models.Group.id == group_staff.group_id).first()
+    return group
+
+@router.post("/{group_id}/children")
+def add_child_to_group(
+    group_id: int,
+    child_id: int,   # можно передавать в теле, но проще в query или JSON
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role("org"))  # admin или org
+):
+    # Проверяем существование отряда
+    group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Проверяем существование ребёнка
+    child = db.query(models.Child).filter(models.Child.id == child_id).first()
+    if not child:
+        raise HTTPException(status_code=404, detail="Child not found")
+
+    # Проверяем, что ребёнок ещё не состоит ни в одном отряде
+    existing = db.query(models.GroupMembership).filter(models.GroupMembership.child_id == child_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Child already assigned to a group")
+
+    # Создаём членство
+    membership = models.GroupMembership(child_id=child_id, group_id=group_id)
+    db.add(membership)
+    db.commit()
+    return {"ok": True, "child_id": child_id, "group_id": group_id}
