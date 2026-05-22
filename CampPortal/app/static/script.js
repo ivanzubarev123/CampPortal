@@ -1,10 +1,10 @@
-// --- глобальные переменные ---
+// --- РіР»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ ---
 let token = localStorage.getItem('access_token');
 let currentUser = null;
 let activeShiftId = null;
-let myGroupId = null;        // для вожатого
+let myGroupId = null;        // РґР»СЏ РІРѕР¶Р°С‚РѕРіРѕ
 
-// --- вспомогательные функции API ---
+// --- РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё API ---
 async function apiCall(url, options = {}) {
     const headers = { 'Content-Type': 'application/json', ...options.headers };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -37,7 +37,7 @@ async function loadUser() {
     if (resp.ok) {
         currentUser = await resp.json();
         if (currentUser.role === 'teacher') {
-            // загружаем его отряд
+            // Р·Р°РіСЂСѓР¶Р°РµРј РµРіРѕ РѕС‚СЂСЏРґ
             const groupResp = await apiCall('/api/groups/my-group');
             if (groupResp.ok) {
                 const group = await groupResp.json();
@@ -53,12 +53,12 @@ function renderLogin() {
     const appDiv = document.getElementById('app');
     appDiv.innerHTML = `
         <div class="login-form">
-            <h2>Вход в систему лагеря</h2>
+            <h2>Р’С…РѕРґ РІ СЃРёСЃС‚РµРјСѓ Р»Р°РіРµСЂСЏ</h2>
             <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="admin@camp.ru"></div>
-            <div class="form-group"><label>Пароль</label><input type="password" id="password"></div>
-            <button onclick="login()">Войти</button>
+            <div class="form-group"><label>РџР°СЂРѕР»СЊ</label><input type="password" id="password"></div>
+            <button onclick="login()">Р’РѕР№С‚Рё</button>
             <div id="login-error" class="error"></div>
-            <hr><small>Тестовые: admin@camp.ru / admin123<br>org@camp.ru / org123<br>teacher1@camp.ru / teacher123</small>
+            <hr><small>РўРµСЃС‚РѕРІС‹Рµ: admin@camp.ru / admin123<br>org@camp.ru / org123<br>teacher1@camp.ru / teacher123</small>
         </div>
     `;
 }
@@ -81,53 +81,53 @@ window.login = async function() {
             await loadActiveShift();
             renderMain();
         } else {
-            errorDiv.innerText = 'Неверный email или пароль';
+            errorDiv.innerText = 'РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ';
         }
     } catch(err) {
-        errorDiv.innerText = 'Ошибка соединения';
+        errorDiv.innerText = 'РћС€РёР±РєР° СЃРѕРµРґРёРЅРµРЅРёСЏ';
     }
 };
 
 function renderMain() {
-    // Если нет активной смены, всё равно показываем меню, но с предупреждением
+    // Р•СЃР»Рё РЅРµС‚ Р°РєС‚РёРІРЅРѕР№ СЃРјРµРЅС‹, РІСЃС‘ СЂР°РІРЅРѕ РїРѕРєР°Р·С‹РІР°РµРј РјРµРЅСЋ, РЅРѕ СЃ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµРј
     if (!activeShiftId) {
-        // Не возвращаем, а просто выводим предупреждение вверху
-        // Но меню строим всё равно
-        console.warn("Нет активной смены. Некоторые функции могут быть ограничены.");
-        // Можно добавить баннер
+        // РќРµ РІРѕР·РІСЂР°С‰Р°РµРј, Р° РїСЂРѕСЃС‚Рѕ РІС‹РІРѕРґРёРј РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ РІРІРµСЂС…Сѓ
+        // РќРѕ РјРµРЅСЋ СЃС‚СЂРѕРёРј РІСЃС‘ СЂР°РІРЅРѕ
+        console.warn("РќРµС‚ Р°РєС‚РёРІРЅРѕР№ СЃРјРµРЅС‹. РќРµРєРѕС‚РѕСЂС‹Рµ С„СѓРЅРєС†РёРё РјРѕРіСѓС‚ Р±С‹С‚СЊ РѕРіСЂР°РЅРёС‡РµРЅС‹.");
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ Р±Р°РЅРЅРµСЂ
     }
     const appDiv = document.getElementById('app');
     let navHtml = `<div class="container">
         <div class="user-info">
-            <span>?? ${escapeHtml(currentUser.full_name)} (${currentUser.role === 'admin' ? 'Администратор' : currentUser.role === 'org' ? 'Организатор' : currentUser.role === 'teacher' ? 'Вожатый' : currentUser.role})</span>
-            <button id="logoutBtn" class="logout-btn">?? Выйти</button>
+            <span>?? ${escapeHtml(currentUser.full_name)} (${currentUser.role === 'admin' ? 'РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ' : currentUser.role === 'org' ? 'РћСЂРіР°РЅРёР·Р°С‚РѕСЂ' : currentUser.role === 'teacher' ? 'Р’РѕР¶Р°С‚С‹Р№' : currentUser.role})</span>
+            <button id="logoutBtn" class="logout-btn">?? Р’С‹Р№С‚Рё</button>
         </div>
-        ${!activeShiftId ? '<div class="warning" style="background:#fef9c3; padding:8px; margin-bottom:16px;">?? Нет активной смены. Перейдите в "Смены" и создайте или активируйте смену.</div>' : ''}
+        ${!activeShiftId ? '<div class="warning" style="background:#fef9c3; padding:8px; margin-bottom:16px;">?? РќРµС‚ Р°РєС‚РёРІРЅРѕР№ СЃРјРµРЅС‹. РџРµСЂРµР№РґРёС‚Рµ РІ "РЎРјРµРЅС‹" Рё СЃРѕР·РґР°Р№С‚Рµ РёР»Рё Р°РєС‚РёРІРёСЂСѓР№С‚Рµ СЃРјРµРЅСѓ.</div>' : ''}
         <nav class="nav">`;
-    // Определяем доступные вкладки по роли
+    // РћРїСЂРµРґРµР»СЏРµРј РґРѕСЃС‚СѓРїРЅС‹Рµ РІРєР»Р°РґРєРё РїРѕ СЂРѕР»Рё
     if (currentUser.role === 'admin') {
-        navHtml += `<button class="tab-btn" data-tab="routine">? Режим дня</button>
-                    <button class="tab-btn" data-tab="activities">?? Мероприятия</button>
-                    <button class="tab-btn" data-tab="groups">?? Отряды</button>
-                    <button class="tab-btn" data-tab="children">?? Дети</button>
-                    <button class="tab-btn" data-tab="staff">????? Сотрудники</button>
-                    <button class="tab-btn" data-tab="attendance">? Отметить участие</button>
-                    <button class="tab-btn" data-tab="report">?? Отчёт</button>
-                    <button class="tab-btn" data-tab="shifts">?? Смены</button>`;
+        navHtml += `<button class="tab-btn" data-tab="routine">? Р РµР¶РёРј РґРЅСЏ</button>
+                    <button class="tab-btn" data-tab="activities">?? РњРµСЂРѕРїСЂРёСЏС‚РёСЏ</button>
+                    <button class="tab-btn" data-tab="groups">?? РћС‚СЂСЏРґС‹</button>
+                    <button class="tab-btn" data-tab="children">?? Р”РµС‚Рё</button>
+                    <button class="tab-btn" data-tab="staff">????? РЎРѕС‚СЂСѓРґРЅРёРєРё</button>
+                    <button class="tab-btn" data-tab="attendance">? РћС‚РјРµС‚РёС‚СЊ СѓС‡Р°СЃС‚РёРµ</button>
+                    <button class="tab-btn" data-tab="report">?? РћС‚С‡С‘С‚</button>
+                    <button class="tab-btn" data-tab="shifts">?? РЎРјРµРЅС‹</button>`;
     } else if (currentUser.role === 'org') {
-        navHtml += `<button class="tab-btn" data-tab="activities">?? Мероприятия (управление)</button>
-                    <button class="tab-btn" data-tab="groups">?? Отряды (управление)</button>
-                    <button class="tab-btn" data-tab="children">?? Дети (все)</button>
-                    <button class="tab-btn" data-tab="staff">????? Сотрудники</button>
-                    <button class="tab-btn" data-tab="report">?? Отчёт</button>`;
+        navHtml += `<button class="tab-btn" data-tab="activities">?? РњРµСЂРѕРїСЂРёСЏС‚РёСЏ (СѓРїСЂР°РІР»РµРЅРёРµ)</button>
+                    <button class="tab-btn" data-tab="groups">?? РћС‚СЂСЏРґС‹ (СѓРїСЂР°РІР»РµРЅРёРµ)</button>
+                    <button class="tab-btn" data-tab="children">?? Р”РµС‚Рё (РІСЃРµ)</button>
+                    <button class="tab-btn" data-tab="staff">????? РЎРѕС‚СЂСѓРґРЅРёРєРё</button>
+                    <button class="tab-btn" data-tab="report">?? РћС‚С‡С‘С‚</button>`;
     } else if (currentUser.role === 'teacher') {
-        navHtml += `<button class="tab-btn" data-tab="mygroup">?? Мой отряд</button>
-                    <button class="tab-btn" data-tab="attendance_teacher">? Отметить участие</button>
-                    <button class="tab-btn" data-tab="report_teacher">?? Отчёт по отряду</button>
-                    <button class="tab-btn" data-tab="schedule">?? Расписание</button>`;
+        navHtml += `<button class="tab-btn" data-tab="mygroup">?? РњРѕР№ РѕС‚СЂСЏРґ</button>
+                    <button class="tab-btn" data-tab="attendance_teacher">? РћС‚РјРµС‚РёС‚СЊ СѓС‡Р°СЃС‚РёРµ</button>
+                    <button class="tab-btn" data-tab="report_teacher">?? РћС‚С‡С‘С‚ РїРѕ РѕС‚СЂСЏРґСѓ</button>
+                    <button class="tab-btn" data-tab="schedule">?? Р Р°СЃРїРёСЃР°РЅРёРµ</button>`;
     }
     
-    navHtml += `</nav><div id="tab-content" class="tab-content">Загрузка...</div></div>`;
+    navHtml += `</nav><div id="tab-content" class="tab-content">Р—Р°РіСЂСѓР·РєР°...</div></div>`;
 
     appDiv.innerHTML = navHtml;
     const logoutBtn = document.getElementById('logoutBtn');
@@ -142,7 +142,7 @@ function renderMain() {
         });
     });
 
-    // Загружаем первую доступную вкладку
+    // Р—Р°РіСЂСѓР¶Р°РµРј РїРµСЂРІСѓСЋ РґРѕСЃС‚СѓРїРЅСѓСЋ РІРєР»Р°РґРєСѓ
     const firstTab = document.querySelector('.tab-btn')?.dataset.tab;
     if (firstTab) loadTabContent(firstTab);
 }
@@ -157,7 +157,7 @@ function setActiveTab(tabId) {
 async function loadTabContent(tab) {
     const container = document.getElementById('tab-content');
     if (!container) return;
-    container.innerHTML = '<div class="loading">? Загрузка...</div>';
+    container.innerHTML = '<div class="loading">? Р—Р°РіСЂСѓР·РєР°...</div>';
     switch(tab) {
         case 'routine': await renderRoutine(container); break;
         case 'activities': await renderActivities(container); break;
@@ -171,39 +171,39 @@ async function loadTabContent(tab) {
         case 'schedule': await renderSchedule(container); break;
         case 'staff': await renderStaff(container); break;
         case 'shifts': await renderShifts(container); break;
-        default: container.innerHTML = '<p>Нет данных</p>';
+        default: container.innerHTML = '<p>РќРµС‚ РґР°РЅРЅС‹С…</p>';
     }
 }
 
-// ----- РЕЖИМ ДНЯ (только админ) -----
+// ----- Р Р•Р–РРњ Р”РќРЇ (С‚РѕР»СЊРєРѕ Р°РґРјРёРЅ) -----
 async function renderRoutine(container) {
     const resp = await apiCall(`/api/routines?shift_id=${activeShiftId}`);
     const routines = await resp.json();
-    let html = `<h2>Режим дня</h2>
+    let html = `<h2>Р РµР¶РёРј РґРЅСЏ</h2>
         <div class="form-card">
-            <h3>? Добавить режимный момент</h3>
-            <div class="form-group"><label>Название</label><input type="text" id="r_name"></div>
-            <div class="form-group"><label>Время</label><input type="time" id="r_time"></div>
-            <button id="createRoutineBtn">Создать</button>
+            <h3>? Р”РѕР±Р°РІРёС‚СЊ СЂРµР¶РёРјРЅС‹Р№ РјРѕРјРµРЅС‚</h3>
+            <div class="form-group"><label>РќР°Р·РІР°РЅРёРµ</label><input type="text" id="r_name"></div>
+            <div class="form-group"><label>Р’СЂРµРјСЏ</label><input type="time" id="r_time"></div>
+            <button id="createRoutineBtn">РЎРѕР·РґР°С‚СЊ</button>
         </div>
-        <h3>?? Список</h3>
-        <table><thead><tr><th>Название</th><th>Время</th><th>Действие</th></tr></thead><tbody>`;
+        <h3>?? РЎРїРёСЃРѕРє</h3>
+        <table><thead><tr><th>РќР°Р·РІР°РЅРёРµ</th><th>Р’СЂРµРјСЏ</th><th>Р”РµР№СЃС‚РІРёРµ</th></tr></thead><tbody>`;
     for (let r of routines) {
-        html += `<tr><td>${escapeHtml(r.name)}</td><td>${r.time}</td><td><button class="danger" data-id="${r.id}" data-action="deleteRoutine">Удалить</button></td></tr>`;
+        html += `<tr><td>${escapeHtml(r.name)}</td><td>${r.time}</td><td><button class="danger" data-id="${r.id}" data-action="deleteRoutine">РЈРґР°Р»РёС‚СЊ</button></td></tr>`;
     }
     html += `</tbody></table>`;
     container.innerHTML = html;
     document.getElementById('createRoutineBtn')?.addEventListener('click', async () => {
         const name = document.getElementById('r_name').value;
         const time = document.getElementById('r_time').value;
-        if (!name || !time) return alert('Заполните поля');
+        if (!name || !time) return alert('Р—Р°РїРѕР»РЅРёС‚Рµ РїРѕР»СЏ');
         const resp = await apiCall('/api/routines', { method: 'POST', body: JSON.stringify({ name, time, shift_id: activeShiftId }) });
         if (resp.ok) loadTabContent('routine');
-        else alert('Ошибка');
+        else alert('РћС€РёР±РєР°');
     });
     document.querySelectorAll('[data-action="deleteRoutine"]').forEach(btn => {
         btn.addEventListener('click', async () => {
-            if (confirm('Удалить?')) {
+            if (confirm('РЈРґР°Р»РёС‚СЊ?')) {
                 await apiCall(`/api/routines/${btn.dataset.id}`, { method: 'DELETE' });
                 loadTabContent('routine');
             }
@@ -211,7 +211,7 @@ async function renderRoutine(container) {
     });
 }
 
-// ----- МЕРОПРИЯТИЯ (админ и орг) -----
+// ----- РњР•Р РћРџР РРЇРўРРЇ (Р°РґРјРёРЅ Рё РѕСЂРі) -----
 async function renderActivities(container) {
     const [actsResp, groupsResp] = await Promise.all([
         apiCall(`/api/activities?shift_id=${activeShiftId}`),
@@ -220,23 +220,23 @@ async function renderActivities(container) {
     const activities = await actsResp.json();
     const groups = await groupsResp.json();
     const canEdit = currentUser.role === 'admin' || currentUser.role === 'org';
-    let html = `<h2>Мероприятия</h2>`;
+    let html = `<h2>РњРµСЂРѕРїСЂРёСЏС‚РёСЏ</h2>`;
     if (canEdit) {
         html += `<div class="form-card">
-            <h3>? Добавить</h3>
-            <div class="form-group"><label>Название</label><input id="act_title"></div>
-            <div class="form-group"><label>Дата</label><input type="date" id="act_date"></div>
-            <div class="form-group"><label>Время</label><input type="time" id="act_time"></div>
-            <div class="form-group"><label>Место</label><input id="act_location"></div>
+            <h3>? Р”РѕР±Р°РІРёС‚СЊ</h3>
+            <div class="form-group"><label>РќР°Р·РІР°РЅРёРµ</label><input id="act_title"></div>
+            <div class="form-group"><label>Р”Р°С‚Р°</label><input type="date" id="act_date"></div>
+            <div class="form-group"><label>Р’СЂРµРјСЏ</label><input type="time" id="act_time"></div>
+            <div class="form-group"><label>РњРµСЃС‚Рѕ</label><input id="act_location"></div>
             <div class="checkbox-group" id="groups-checkboxes">`;
         for (let g of groups) {
             html += `<label><input type="checkbox" value="${g.id}" class="act-group-cb"> ${escapeHtml(g.name)}</label>`;
         }
-        html += `</div><button id="createActivityBtn">Создать</button></div>`;
+        html += `</div><button id="createActivityBtn">РЎРѕР·РґР°С‚СЊ</button></div>`;
     }
-    html += `<h3>?? Список</h3><table><thead><tr><th>Название</th><th>Дата/Время</th><th>Место</th>${canEdit ? '<th>Действие</th>' : ''}</tr></thead><tbody>`;
+    html += `<h3>?? РЎРїРёСЃРѕРє</h3><table><thead><tr><th>РќР°Р·РІР°РЅРёРµ</th><th>Р”Р°С‚Р°/Р’СЂРµРјСЏ</th><th>РњРµСЃС‚Рѕ</th>${canEdit ? '<th>Р”РµР№СЃС‚РІРёРµ</th>' : ''}</tr></thead><tbody>`;
     for (let a of activities) {
-        html += `<tr><td>${escapeHtml(a.title)}</td><td>${a.date} ${a.start_time}</td><td>${escapeHtml(a.location||'')}</td>${canEdit ? `<td><button class="danger" data-id="${a.id}" data-action="deleteActivity">Удалить</button></td>` : ''}</tr>`;
+        html += `<tr><td>${escapeHtml(a.title)}</td><td>${a.date} ${a.start_time}</td><td>${escapeHtml(a.location||'')}</td>${canEdit ? `<td><button class="danger" data-id="${a.id}" data-action="deleteActivity">РЈРґР°Р»РёС‚СЊ</button></td>` : ''}</tr>`;
     }
     html += `</tbody></table>`;
     container.innerHTML = html;
@@ -247,15 +247,15 @@ async function renderActivities(container) {
             const date = document.getElementById('act_date').value;
             const start_time = document.getElementById('act_time').value;
             const location = document.getElementById('act_location').value;
-            if (!title || !date || !start_time) return alert('Заполните обязательные поля');
+            if (!title || !date || !start_time) return alert('Р—Р°РїРѕР»РЅРёС‚Рµ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ РїРѕР»СЏ');
             const group_ids = Array.from(document.querySelectorAll('.act-group-cb:checked')).map(cb => parseInt(cb.value));
             const resp = await apiCall('/api/activities', { method: 'POST', body: JSON.stringify({ title, type, date, start_time, location, shift_id: activeShiftId, group_ids }) });
             if (resp.ok) loadTabContent('activities');
-            else alert('Ошибка');
+            else alert('РћС€РёР±РєР°');
         });
         document.querySelectorAll('[data-action="deleteActivity"]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                if (confirm('Удалить мероприятие?')) {
+                if (confirm('РЈРґР°Р»РёС‚СЊ РјРµСЂРѕРїСЂРёСЏС‚РёРµ?')) {
                     await apiCall(`/api/activities/${btn.dataset.id}`, { method: 'DELETE' });
                     loadTabContent('activities');
                 }
@@ -264,63 +264,63 @@ async function renderActivities(container) {
     }
 }
 
-// ----- УПРАВЛЕНИЕ ОТРЯДАМИ (админ и орг) -----
+// ----- РЈРџР РђР’Р›Р•РќРР• РћРўР РЇР”РђРњР (Р°РґРјРёРЅ Рё РѕСЂРі) -----
 async function renderGroupsAdmin(container) {
     const groupsResp = await apiCall(`/api/groups?shift_id=${activeShiftId}`);
     const groups = await groupsResp.json();
-    let html = `<h2>Управление отрядами</h2>
+    let html = `<h2>РЈРїСЂР°РІР»РµРЅРёРµ РѕС‚СЂСЏРґР°РјРё</h2>
         <div class="form-card">
-            <h3>? Создать отряд</h3>
-            <div class="form-group"><label>Название</label><input id="group_name"></div>
-            <div class="form-group"><label>Возрастная группа</label><input id="group_age"></div>
-            <button id="createGroupBtn">Создать</button>
+            <h3>? РЎРѕР·РґР°С‚СЊ РѕС‚СЂСЏРґ</h3>
+            <div class="form-group"><label>РќР°Р·РІР°РЅРёРµ</label><input id="group_name"></div>
+            <div class="form-group"><label>Р’РѕР·СЂР°СЃС‚РЅР°СЏ РіСЂСѓРїРїР°</label><input id="group_age"></div>
+            <button id="createGroupBtn">РЎРѕР·РґР°С‚СЊ</button>
         </div>
-        <h3>?? Существующие отряды</h3>`;
+        <h3>?? РЎСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РѕС‚СЂСЏРґС‹</h3>`;
     for (let g of groups) {
         html += `<div style="border:1px solid #ccc; margin-bottom:10px; padding:10px;">
             <strong>${escapeHtml(g.name)}</strong> (${g.age_range || ''})
-            <button class="danger" data-id="${g.id}" data-action="deleteGroup">Удалить отряд</button>
-            <button data-id="${g.id}" data-action="manageGroup">? Назначить детей / вожатых</button>
+            <button class="danger" data-id="${g.id}" data-action="deleteGroup">РЈРґР°Р»РёС‚СЊ РѕС‚СЂСЏРґ</button>
+            <button data-id="${g.id}" data-action="manageGroup">? РќР°Р·РЅР°С‡РёС‚СЊ РґРµС‚РµР№ / РІРѕР¶Р°С‚С‹С…</button>
             <div id="group-detail-${g.id}" style="display:none; margin-top:10px;"></div>
         </div>`;
     }
     container.innerHTML = html;
     document.getElementById('createGroupBtn')?.addEventListener('click', async () => {
         const name = document.getElementById('group_name').value;
-        if (!name) return alert('Введите название');
+        if (!name) return alert('Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ');
         const age_range = document.getElementById('group_age').value;
         const resp = await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name, age_range, shift_id: activeShiftId }) });
         if (resp.ok) loadTabContent('groups');
-        else alert('Ошибка');
+        else alert('РћС€РёР±РєР°');
     });
-    // Удаление отряда
+    // РЈРґР°Р»РµРЅРёРµ РѕС‚СЂСЏРґР°
     document.querySelectorAll('[data-action="deleteGroup"]').forEach(btn => {
         btn.addEventListener('click', async () => {
-            if (confirm('Удалить отряд? Дети останутся без отряда.')) {
+            if (confirm('РЈРґР°Р»РёС‚СЊ РѕС‚СЂСЏРґ? Р”РµС‚Рё РѕСЃС‚Р°РЅСѓС‚СЃСЏ Р±РµР· РѕС‚СЂСЏРґР°.')) {
                 await apiCall(`/api/groups/${btn.dataset.id}`, { method: 'DELETE' });
                 loadTabContent('groups');
             }
         });
     });
-    // Кнопка управления (просмотр и назначение детей и вожатых)
+    // РљРЅРѕРїРєР° СѓРїСЂР°РІР»РµРЅРёСЏ (РїСЂРѕСЃРјРѕС‚СЂ Рё РЅР°Р·РЅР°С‡РµРЅРёРµ РґРµС‚РµР№ Рё РІРѕР¶Р°С‚С‹С…)
     document.querySelectorAll('[data-action="manageGroup"]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const groupId = btn.dataset.id;
             const detailDiv = document.getElementById(`group-detail-${groupId}`);
             
             if (detailDiv.style.display === 'none') {
-                detailDiv.innerHTML = '<i>Загрузка данных...</i>';
+                detailDiv.innerHTML = '<i>Р—Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С…...</i>';
                 detailDiv.style.display = 'block';
 
                 try {
-                    // 1. Получаем данные конкретного отряда
+                    // 1. РџРѕР»СѓС‡Р°РµРј РґР°РЅРЅС‹Рµ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РѕС‚СЂСЏРґР°
                     const groupResp = await apiCall(`/api/groups/${groupId}`);
                     let groupData = {};
                     if (groupResp.ok) {
                         groupData = await groupResp.json();
                     }
 
-                    // 2. Загружаем всех детей смены
+                    // 2. Р—Р°РіСЂСѓР¶Р°РµРј РІСЃРµС… РґРµС‚РµР№ СЃРјРµРЅС‹
                     const allChildrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}`);
                     let freeChildren = [];
                     let groupChildren = [];
@@ -335,7 +335,7 @@ async function renderGroupsAdmin(container) {
                         }
                     }
 
-                    // 3. Загружаем сотрудников
+                    // 3. Р—Р°РіСЂСѓР¶Р°РµРј СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ
                     const staffResp = await apiCall(`/api/auth/users`);
                     let staffList = [];
                     let groupStaff = groupData.staff || []; 
@@ -345,60 +345,60 @@ async function renderGroupsAdmin(container) {
                         staffList = allStaff.filter(s => s.role === 'teacher');
                     }
 
-                    // 4. Генерация списков (Дети)
+                    // 4. Р“РµРЅРµСЂР°С†РёСЏ СЃРїРёСЃРєРѕРІ (Р”РµС‚Рё)
                     const childrenListHtml = groupChildren.length > 0 
                         ? `<ul style="list-style: none; padding: 0;">
                             ${groupChildren.map(c => `
                                 <li style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                                     ${escapeHtml(c.full_name)}
-                                    <button class="icon-btn danger" onclick="window.removeChildFromGroup(${groupId}, ${c.id})" title="Удалить из отряда" style="cursor: pointer; padding: 2px 5px;">?</button>
+                                    <button class="icon-btn danger" onclick="window.removeChildFromGroup(${groupId}, ${c.id})" title="РЈРґР°Р»РёС‚СЊ РёР· РѕС‚СЂСЏРґР°" style="cursor: pointer; padding: 2px 5px;">?</button>
                                 </li>`).join('')}
                            </ul>`
-                        : `<p style="color: gray; font-size: 0.9em;">В отряде пока нет детей.</p>`;
+                        : `<p style="color: gray; font-size: 0.9em;">Р’ РѕС‚СЂСЏРґРµ РїРѕРєР° РЅРµС‚ РґРµС‚РµР№.</p>`;
 
-                    // 5. Генерация списков (Вожатые)
+                    // 5. Р“РµРЅРµСЂР°С†РёСЏ СЃРїРёСЃРєРѕРІ (Р’РѕР¶Р°С‚С‹Рµ)
                     const staffListHtml = groupStaff.length > 0
                         ? `<ul style="list-style: none; padding: 0;">
                             ${groupStaff.map(s => `
                                 <li style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                                     ${escapeHtml(s.full_name)}
-                                    <button class="icon-btn danger" onclick="window.removeStaffFromGroup(${groupId}, ${s.id})" title="Открепить вожатого" style="cursor: pointer; padding: 2px 5px;">?</button>
+                                    <button class="icon-btn danger" onclick="window.removeStaffFromGroup(${groupId}, ${s.id})" title="РћС‚РєСЂРµРїРёС‚СЊ РІРѕР¶Р°С‚РѕРіРѕ" style="cursor: pointer; padding: 2px 5px;">?</button>
                                 </li>`).join('')}
                            </ul>`
-                        : `<p style="color: gray; font-size: 0.9em;">Вожатые не назначены.</p>`;
+                        : `<p style="color: gray; font-size: 0.9em;">Р’РѕР¶Р°С‚С‹Рµ РЅРµ РЅР°Р·РЅР°С‡РµРЅС‹.</p>`;
 
-                    // 6. Отрисовываем интерфейс 
+                    // 6. РћС‚СЂРёСЃРѕРІС‹РІР°РµРј РёРЅС‚РµСЂС„РµР№СЃ 
                     detailDiv.innerHTML = `
                         <div style="display: flex; gap: 2rem; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
                             <div style="flex: 1;">
-                                <h4 style="margin-top: 0;">????? Дети в отряде</h4>
+                                <h4 style="margin-top: 0;">????? Р”РµС‚Рё РІ РѕС‚СЂСЏРґРµ</h4>
                                 ${childrenListHtml}
                                 
                                 <div style="margin-top: 15px;">
                                     <select id="child-select-${groupId}" style="width: 100%; margin-bottom: 5px;">
-                                        <option value="">-- Выберите ребёнка --</option>
+                                        <option value="">-- Р’С‹Р±РµСЂРёС‚Рµ СЂРµР±С‘РЅРєР° --</option>
                                         ${freeChildren.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('')}
                                     </select>
-                                    <button onclick="window.addChildToGroup(${groupId})" style="width: 100%;">Добавить ребёнка</button>
+                                    <button onclick="window.addChildToGroup(${groupId})" style="width: 100%;">Р”РѕР±Р°РІРёС‚СЊ СЂРµР±С‘РЅРєР°</button>
                                 </div>
                             </div>
 
                             <div style="flex: 1;">
-                                <h4 style="margin-top: 0;">????? Вожатые отряда</h4>
+                                <h4 style="margin-top: 0;">????? Р’РѕР¶Р°С‚С‹Рµ РѕС‚СЂСЏРґР°</h4>
                                 ${staffListHtml}
 
                                 <div style="margin-top: 15px;">
                                     <select id="staff-select-${groupId}" style="width: 100%; margin-bottom: 5px;">
-                                        <option value="">-- Выберите сотрудника --</option>
+                                        <option value="">-- Р’С‹Р±РµСЂРёС‚Рµ СЃРѕС‚СЂСѓРґРЅРёРєР° --</option>
                                         ${staffList.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}
                                     </select>
-                                    <button onclick="window.assignStaffToGroup(${groupId})" style="width: 100%;">Назначить вожатого</button>
+                                    <button onclick="window.assignStaffToGroup(${groupId})" style="width: 100%;">РќР°Р·РЅР°С‡РёС‚СЊ РІРѕР¶Р°С‚РѕРіРѕ</button>
                                 </div>
                             </div>
                         </div>
                     `;
                 } catch (error) {
-                    detailDiv.innerHTML = `<p style="color:red;">Ошибка загрузки данных</p>`;
+                    detailDiv.innerHTML = `<p style="color:red;">РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РґР°РЅРЅС‹С…</p>`;
                     console.error(error);
                 }
             } else {
@@ -406,14 +406,14 @@ async function renderGroupsAdmin(container) {
             }
         });
     });
-} // <-- Это конец функции renderGroupsAdmin
+} // <-- Р­С‚Рѕ РєРѕРЅРµС† С„СѓРЅРєС†РёРё renderGroupsAdmin
 
-// Ниже идут глобальные функции. Если у вас там лежат старые addChildToGroup, 
-// просто замените их все на этот блок:
+// РќРёР¶Рµ РёРґСѓС‚ РіР»РѕР±Р°Р»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё. Р•СЃР»Рё Сѓ РІР°СЃ С‚Р°Рј Р»РµР¶Р°С‚ СЃС‚Р°СЂС‹Рµ addChildToGroup, 
+// РїСЂРѕСЃС‚Рѕ Р·Р°РјРµРЅРёС‚Рµ РёС… РІСЃРµ РЅР° СЌС‚РѕС‚ Р±Р»РѕРє:
 
 window.addChildToGroup = async (groupId) => {
     const childId = document.getElementById(`child-select-${groupId}`).value;
-    if (!childId) return alert('Пожалуйста, выберите ребёнка из списка');
+    if (!childId) return alert('РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІС‹Р±РµСЂРёС‚Рµ СЂРµР±С‘РЅРєР° РёР· СЃРїРёСЃРєР°');
     
     const resp = await apiCall(`/api/groups/${groupId}/children`, { 
         method: 'POST',
@@ -421,17 +421,17 @@ window.addChildToGroup = async (groupId) => {
     });
     
     if (resp.ok) {
-        alert('Ребёнок добавлен в отряд');
+        alert('Р РµР±С‘РЅРѕРє РґРѕР±Р°РІР»РµРЅ РІ РѕС‚СЂСЏРґ');
         loadTabContent('groups');
     } else {
         const errorData = await resp.json();
-        alert(`Ошибка при добавлении: ${errorData.detail || 'Неизвестная ошибка'}`);
+        alert(`РћС€РёР±РєР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё: ${errorData.detail || 'РќРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР°'}`);
     }
 };
 
 window.assignStaffToGroup = async (groupId) => {
     const userId = document.getElementById(`staff-select-${groupId}`).value;
-    if (!userId) return alert('Пожалуйста, выберите сотрудника из списка');
+    if (!userId) return alert('РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІС‹Р±РµСЂРёС‚Рµ СЃРѕС‚СЂСѓРґРЅРёРєР° РёР· СЃРїРёСЃРєР°');
     
     const resp = await apiCall(`/api/groups/${groupId}/staff`, { 
         method: 'POST', 
@@ -439,35 +439,35 @@ window.assignStaffToGroup = async (groupId) => {
     });
     
     if (resp.ok) {
-        alert('Вожатый назначен на отряд');
+        alert('Р’РѕР¶Р°С‚С‹Р№ РЅР°Р·РЅР°С‡РµРЅ РЅР° РѕС‚СЂСЏРґ');
         loadTabContent('groups');
     } else {
         const errorData = await resp.json();
-        alert(`Ошибка при назначении: ${errorData.detail || 'Неизвестная ошибка'}`);
+        alert(`РћС€РёР±РєР° РїСЂРё РЅР°Р·РЅР°С‡РµРЅРёРё: ${errorData.detail || 'РќРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР°'}`);
     }
 };
 
 window.removeChildFromGroup = async (groupId, childId) => {
-    if (!confirm('Вы уверены, что хотите убрать ребёнка из этого отряда?')) return;
+    if (!confirm('Р’С‹ СѓРІРµСЂРµРЅС‹, С‡С‚Рѕ С…РѕС‚РёС‚Рµ СѓР±СЂР°С‚СЊ СЂРµР±С‘РЅРєР° РёР· СЌС‚РѕРіРѕ РѕС‚СЂСЏРґР°?')) return;
     
     const resp = await apiCall(`/api/groups/${groupId}/children/${childId}`, { method: 'DELETE' });
     if (resp.ok) {
         loadTabContent('groups');
     } else {
         const err = await resp.json();
-        alert(`Ошибка: ${err.detail || 'Не удалось удалить ребёнка'}`);
+        alert(`РћС€РёР±РєР°: ${err.detail || 'РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ СЂРµР±С‘РЅРєР°'}`);
     }
 };
 
 window.removeStaffFromGroup = async (groupId, userId) => {
-    if (!confirm('Вы уверены, что хотите открепить этого вожатого от отряда?')) return;
+    if (!confirm('Р’С‹ СѓРІРµСЂРµРЅС‹, С‡С‚Рѕ С…РѕС‚РёС‚Рµ РѕС‚РєСЂРµРїРёС‚СЊ СЌС‚РѕРіРѕ РІРѕР¶Р°С‚РѕРіРѕ РѕС‚ РѕС‚СЂСЏРґР°?')) return;
     
     const resp = await apiCall(`/api/groups/${groupId}/staff/${userId}`, { method: 'DELETE' });
     if (resp.ok) {
         loadTabContent('groups');
     } else {
         const err = await resp.json();
-        alert(`Ошибка: ${err.detail || 'Не удалось открепить вожатого'}`);
+        alert(`РћС€РёР±РєР°: ${err.detail || 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂРµРїРёС‚СЊ РІРѕР¶Р°С‚РѕРіРѕ'}`);
     }
 };
 
@@ -475,45 +475,45 @@ async function renderChildrenAll(container) {
     const resp = await apiCall(`/api/children?shift_id=${activeShiftId}`);
     const children = await resp.json();
     const canEdit = currentUser.role === 'admin' || currentUser.role === 'org';
-    let html = `<h2>Все дети</h2>`;
+    let html = `<h2>Р’СЃРµ РґРµС‚Рё</h2>`;
     if (canEdit) {
         html += `<div class="batch-actions">
-            <button id="batchDeleteBtn" class="danger" style="display:none;">??? Удалить выбранных</button>
-            <button id="selectAllBtn">? Выбрать всех</button>
-            <button id="clearAllBtn">? Снять все</button>
-            <button id="showAddChildFormBtn" style="background:#10b981;">? Добавить ребёнка</button>
+            <button id="batchDeleteBtn" class="danger" style="display:none;">??? РЈРґР°Р»РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹С…</button>
+            <button id="selectAllBtn">? Р’С‹Р±СЂР°С‚СЊ РІСЃРµС…</button>
+            <button id="clearAllBtn">? РЎРЅСЏС‚СЊ РІСЃРµ</button>
+            <button id="showAddChildFormBtn" style="background:#10b981;">? Р”РѕР±Р°РІРёС‚СЊ СЂРµР±С‘РЅРєР°</button>
         </div>`;
     } else {
-        html += `<button id="showAddChildFormBtn">? Добавить ребёнка</button>`;
+        html += `<button id="showAddChildFormBtn">? Р”РѕР±Р°РІРёС‚СЊ СЂРµР±С‘РЅРєР°</button>`;
     }
-    // Форма добавления
+    // Р¤РѕСЂРјР° РґРѕР±Р°РІР»РµРЅРёСЏ
     html += `<div id="addChildForm" style="display:none;" class="form-card">
-                <h3>Новый ребёнок</h3>
-                <div class="form-group"><label>ФИО *</label><input id="child_full_name"></div>
-                <div class="form-group"><label>Дата рождения</label><input type="date" id="child_birth_date"></div>
-                <div class="form-group"><label>Телефон родителя</label><input id="child_parent_phone"></div>
-                <div class="form-group"><label>ФИО родителя</label><input id="child_parent_name"></div>
-                <div class="form-group"><label>Мед. особенности</label><input id="child_medical_notes"></div>
-                <button id="submitChildBtn">Сохранить</button>
-                <button id="cancelChildBtn" style="background:#64748b;">Отмена</button>
+                <h3>РќРѕРІС‹Р№ СЂРµР±С‘РЅРѕРє</h3>
+                <div class="form-group"><label>Р¤РРћ *</label><input id="child_full_name"></div>
+                <div class="form-group"><label>Р”Р°С‚Р° СЂРѕР¶РґРµРЅРёСЏ</label><input type="date" id="child_birth_date"></div>
+                <div class="form-group"><label>РўРµР»РµС„РѕРЅ СЂРѕРґРёС‚РµР»СЏ</label><input id="child_parent_phone"></div>
+                <div class="form-group"><label>Р¤РРћ СЂРѕРґРёС‚РµР»СЏ</label><input id="child_parent_name"></div>
+                <div class="form-group"><label>РњРµРґ. РѕСЃРѕР±РµРЅРЅРѕСЃС‚Рё</label><input id="child_medical_notes"></div>
+                <button id="submitChildBtn">РЎРѕС…СЂР°РЅРёС‚СЊ</button>
+                <button id="cancelChildBtn" style="background:#64748b;">РћС‚РјРµРЅР°</button>
             </div>`;
-    // Таблица с чекбоксами для массового удаления
+    // РўР°Р±Р»РёС†Р° СЃ С‡РµРєР±РѕРєСЃР°РјРё РґР»СЏ РјР°СЃСЃРѕРІРѕРіРѕ СѓРґР°Р»РµРЅРёСЏ
     html += `<div style="overflow-x:auto;">
         <table>
             <thead>
                 <tr>
                     ${canEdit ? '<th class="checkbox-col"><input type="checkbox" id="masterCheckbox"></th>' : ''}
-                    <th>ФИО</th>
-                    <th>Отряд</th>
-                    <th>Статус</th>
-                    ${canEdit ? '<th>Действие</th>' : ''}
+                    <th>Р¤РРћ</th>
+                    <th>РћС‚СЂСЏРґ</th>
+                    <th>РЎС‚Р°С‚СѓСЃ</th>
+                    ${canEdit ? '<th>Р”РµР№СЃС‚РІРёРµ</th>' : ''}
                 </tr>
             </thead>
             <tbody id="childrenTableBody">
     `;
     for (let c of children) {
-        // Упрощённое получение отряда – в реальности лучше сделать эндпоинт /children?include_group=true, но для демо оставим
-        let groupName = '—';
+        // РЈРїСЂРѕС‰С‘РЅРЅРѕРµ РїРѕР»СѓС‡РµРЅРёРµ РѕС‚СЂСЏРґР° вЂ“ РІ СЂРµР°Р»СЊРЅРѕСЃС‚Рё Р»СѓС‡С€Рµ СЃРґРµР»Р°С‚СЊ СЌРЅРґРїРѕРёРЅС‚ /children?include_group=true, РЅРѕ РґР»СЏ РґРµРјРѕ РѕСЃС‚Р°РІРёРј
+        let groupName = 'вЂ”';
         try {
             const groupResp = await apiCall(`/api/groups?child_id=${c.id}`);
             if (groupResp.ok) {
@@ -527,7 +527,7 @@ async function renderChildrenAll(container) {
                     <td>${groupName}</td>
                     <td>${c.status}</td>
                     ${canEdit ? `<td class="action-icons">
-                        <button class="icon-btn danger delete-one" data-id="${c.id}" data-name="${escapeHtml(c.full_name)}" title="Удалить">???</button>
+                        <button class="icon-btn danger delete-one" data-id="${c.id}" data-name="${escapeHtml(c.full_name)}" title="РЈРґР°Р»РёС‚СЊ">???</button>
                     </td>` : ''}
                  </tr>`;
     }
@@ -538,7 +538,7 @@ async function renderChildrenAll(container) {
 
     if (!canEdit) return;
 
-    // --- Логика массового удаления ---
+    // --- Р›РѕРіРёРєР° РјР°СЃСЃРѕРІРѕРіРѕ СѓРґР°Р»РµРЅРёСЏ ---
     const masterCheckbox = document.getElementById('masterCheckbox');
     const childCheckboxes = () => document.querySelectorAll('.child-checkbox');
     const batchDeleteBtn = document.getElementById('batchDeleteBtn');
@@ -547,7 +547,7 @@ async function renderChildrenAll(container) {
         const checked = document.querySelectorAll('.child-checkbox:checked').length;
         if (checked > 0) {
             batchDeleteBtn.style.display = 'inline-block';
-            batchDeleteBtn.innerText = `??? Удалить выбранных (${checked})`;
+            batchDeleteBtn.innerText = `??? РЈРґР°Р»РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹С… (${checked})`;
         } else {
             batchDeleteBtn.style.display = 'none';
         }
@@ -563,7 +563,7 @@ async function renderChildrenAll(container) {
         cb.addEventListener('change', updateBatchButton);
     });
     
-    // Выделить всех / снять всех
+    // Р’С‹РґРµР»РёС‚СЊ РІСЃРµС… / СЃРЅСЏС‚СЊ РІСЃРµС…
     document.getElementById('selectAllBtn')?.addEventListener('click', () => {
         childCheckboxes().forEach(cb => cb.checked = true);
         if (masterCheckbox) masterCheckbox.checked = true;
@@ -575,45 +575,45 @@ async function renderChildrenAll(container) {
         updateBatchButton();
     });
     
-    // Массовое удаление
+    // РњР°СЃСЃРѕРІРѕРµ СѓРґР°Р»РµРЅРёРµ
     batchDeleteBtn?.addEventListener('click', async () => {
         const selectedIds = Array.from(childCheckboxes()).filter(cb => cb.checked).map(cb => parseInt(cb.value));
         if (selectedIds.length === 0) return;
-        const confirmMsg = `Удалить ${selectedIds.length} ребёнка(ей)? Это действие нельзя отменить.`;
+        const confirmMsg = `РЈРґР°Р»РёС‚СЊ ${selectedIds.length} СЂРµР±С‘РЅРєР°(РµР№)? Р­С‚Рѕ РґРµР№СЃС‚РІРёРµ РЅРµР»СЊР·СЏ РѕС‚РјРµРЅРёС‚СЊ.`;
         if (confirm(confirmMsg)) {
             for (let id of selectedIds) {
                 await apiCall(`/api/children/${id}`, { method: 'DELETE' });
             }
-            await loadTabContent('children'); // перезагружаем таблицу
+            await loadTabContent('children'); // РїРµСЂРµР·Р°РіСЂСѓР¶Р°РµРј С‚Р°Р±Р»РёС†Сѓ
         }
     });
     
-    // Одиночное удаление с анимацией
+    // РћРґРёРЅРѕС‡РЅРѕРµ СѓРґР°Р»РµРЅРёРµ СЃ Р°РЅРёРјР°С†РёРµР№
     document.querySelectorAll('.delete-one').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (confirm(`Удалить ребёнка "${name}"?`)) {
+            if (confirm(`РЈРґР°Р»РёС‚СЊ СЂРµР±С‘РЅРєР° "${name}"?`)) {
                 const row = btn.closest('tr');
                 row.style.opacity = '0.5';
                 const resp = await apiCall(`/api/children/${id}`, { method: 'DELETE' });
                 if (resp.ok) {
                     row.remove();
-                    // Если после удаления не осталось строк, покажем сообщение
+                    // Р•СЃР»Рё РїРѕСЃР»Рµ СѓРґР°Р»РµРЅРёСЏ РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ СЃС‚СЂРѕРє, РїРѕРєР°Р¶РµРј СЃРѕРѕР±С‰РµРЅРёРµ
                     if (document.querySelectorAll('#childrenTableBody tr').length === 0) {
-                        document.getElementById('childrenTableBody').innerHTML = '<tr><td colspan="5">Нет детей</td></tr>';
+                        document.getElementById('childrenTableBody').innerHTML = '<tr><td colspan="5">РќРµС‚ РґРµС‚РµР№</td></tr>';
                     }
                     updateBatchButton();
                     if (masterCheckbox) masterCheckbox.checked = false;
                 } else {
-                    alert('Ошибка удаления');
+                    alert('РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ');
                     row.style.opacity = '1';
                 }
             }
         });
     });
     
-    // --- Форма добавления ---
+    // --- Р¤РѕСЂРјР° РґРѕР±Р°РІР»РµРЅРёСЏ ---
     const showBtn = document.getElementById('showAddChildFormBtn');
     const formDiv = document.getElementById('addChildForm');
     const cancelBtn = document.getElementById('cancelChildBtn');
@@ -627,7 +627,7 @@ async function renderChildrenAll(container) {
     }
     document.getElementById('submitChildBtn')?.addEventListener('click', async () => {
         const full_name = document.getElementById('child_full_name').value.trim();
-        if (!full_name) return alert('ФИО обязательно');
+        if (!full_name) return alert('Р¤РРћ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ');
         const birth_date = document.getElementById('child_birth_date').value || null;
         const parent_phone = document.getElementById('child_parent_phone').value || null;
         const parent_name = document.getElementById('child_parent_name').value || null;
@@ -643,44 +643,44 @@ async function renderChildrenAll(container) {
             document.getElementById('child_medical_notes').value = '';
             await loadTabContent('children');
         } else {
-            alert('Ошибка добавления');
+            alert('РћС€РёР±РєР° РґРѕР±Р°РІР»РµРЅРёСЏ');
         }
     });
 }
 
-// ----- ОТМЕТКА УЧАСТИЯ для админа/орг (выбор мероприятия, всех детей) -----
+// ----- РћРўРњР•РўРљРђ РЈР§РђРЎРўРРЇ РґР»СЏ Р°РґРјРёРЅР°/РѕСЂРі (РІС‹Р±РѕСЂ РјРµСЂРѕРїСЂРёСЏС‚РёСЏ, РІСЃРµС… РґРµС‚РµР№) -----
 async function renderAttendanceAdmin(container) {
     const actsResp = await apiCall(`/api/activities?shift_id=${activeShiftId}`);
     const activities = await actsResp.json();
-    container.innerHTML = `<h2>Отметка участия</h2>
+    container.innerHTML = `<h2>РћС‚РјРµС‚РєР° СѓС‡Р°СЃС‚РёСЏ</h2>
         <select id="att_act_id">${activities.map(a => `<option value="${a.id}">${a.title} (${a.date})</option>`).join('')}</select>
-        <button id="loadAttendanceBtn">Загрузить детей</button>
+        <button id="loadAttendanceBtn">Р—Р°РіСЂСѓР·РёС‚СЊ РґРµС‚РµР№</button>
         <div id="attendance-area"></div>`;
     document.getElementById('loadAttendanceBtn').addEventListener('click', async () => {
         const actId = document.getElementById('att_act_id').value;
         const resp = await apiCall(`/api/attendance/activity/${actId}`);
         const data = await resp.json();
-        let formHtml = `<form id="attForm"><table><tr><th>Ребёнок</th><th>Участвовал</th></tr>`;
+        let formHtml = `<form id="attForm"><table><tr><th>Р РµР±С‘РЅРѕРє</th><th>РЈС‡Р°СЃС‚РІРѕРІР°Р»</th></tr>`;
         for (let item of data) {
             formHtml += `<tr><td>${item.child_name}</td><td><input type="checkbox" data-child="${item.child_id}" ${item.participated ? 'checked' : ''}></td></tr>`;
         }
-        formHtml += `</table><button type="submit">Сохранить</button></form>`;
+        formHtml += `</table><button type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ</button></form>`;
         document.getElementById('attendance-area').innerHTML = formHtml;
         document.getElementById('attForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const marks = Array.from(document.querySelectorAll('#attForm input[type="checkbox"]')).map(cb => ({ child_id: parseInt(cb.dataset.child), participated: cb.checked }));
             await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
-            alert('Сохранено');
+            alert('РЎРѕС…СЂР°РЅРµРЅРѕ');
         });
     });
 }
 
-// ----- ВОЖАТЫЙ: мой отряд -----
+// ----- Р’РћР–РђРўР«Р™: РјРѕР№ РѕС‚СЂСЏРґ -----
 async function renderMyGroup(container) {
-    if (!myGroupId) { container.innerHTML = '<p>Вы не привязаны ни к одному отряду.</p>'; return; }
+    if (!myGroupId) { container.innerHTML = '<p>Р’С‹ РЅРµ РїСЂРёРІСЏР·Р°РЅС‹ РЅРё Рє РѕРґРЅРѕРјСѓ РѕС‚СЂСЏРґСѓ.</p>'; return; }
     const childrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}&group_id=${myGroupId}`);
     const children = await childrenResp.json();
-    let html = `<h2>Мой отряд (ID ${myGroupId})</h2><table><thead><tr><th>ФИО</th><th>Дата рождения</th><th>Телефон родителя</th></tr></thead><tbody>`;
+    let html = `<h2>РњРѕР№ РѕС‚СЂСЏРґ (ID ${myGroupId})</h2><table><thead><tr><th>Р¤РРћ</th><th>Р”Р°С‚Р° СЂРѕР¶РґРµРЅРёСЏ</th><th>РўРµР»РµС„РѕРЅ СЂРѕРґРёС‚РµР»СЏ</th></tr></thead><tbody>`;
     for (let c of children) {
         html += `<tr><td>${escapeHtml(c.full_name)}</td><td>${c.birth_date || ''}</td><td>${escapeHtml(c.parent_phone || '')}</td></tr>`;
     }
@@ -688,51 +688,51 @@ async function renderMyGroup(container) {
     container.innerHTML = html;
 }
 
-// ----- ВОЖАТЫЙ: отметка участия (только мероприятия, где участвует его отряд) -----
+// ----- Р’РћР–РђРўР«Р™: РѕС‚РјРµС‚РєР° СѓС‡Р°СЃС‚РёСЏ (С‚РѕР»СЊРєРѕ РјРµСЂРѕРїСЂРёСЏС‚РёСЏ, РіРґРµ СѓС‡Р°СЃС‚РІСѓРµС‚ РµРіРѕ РѕС‚СЂСЏРґ) -----
 async function renderAttendanceTeacher(container) {
     const actsResp = await apiCall(`/api/activities?shift_id=${activeShiftId}`);
     let activities = await actsResp.json();
-    // фильтруем мероприятия, в которых участвует его отряд
+    // С„РёР»СЊС‚СЂСѓРµРј РјРµСЂРѕРїСЂРёСЏС‚РёСЏ, РІ РєРѕС‚РѕСЂС‹С… СѓС‡Р°СЃС‚РІСѓРµС‚ РµРіРѕ РѕС‚СЂСЏРґ
     const filtered = [];
     for (let act of activities) {
         const partResp = await apiCall(`/api/activities/${act.id}/groups`);
         const groups = await partResp.json();
         if (groups.some(g => g.id === myGroupId)) filtered.push(act);
     }
-    container.innerHTML = `<h2>Отметка участия (мой отряд)</h2>
+    container.innerHTML = `<h2>РћС‚РјРµС‚РєР° СѓС‡Р°СЃС‚РёСЏ (РјРѕР№ РѕС‚СЂСЏРґ)</h2>
         <select id="att_act_id_teacher">${filtered.map(a => `<option value="${a.id}">${a.title} (${a.date})</option>`).join('')}</select>
-        <button id="loadTeacherAttendance">Загрузить детей</button>
+        <button id="loadTeacherAttendance">Р—Р°РіСЂСѓР·РёС‚СЊ РґРµС‚РµР№</button>
         <div id="attendance-area-teacher"></div>`;
     document.getElementById('loadTeacherAttendance').addEventListener('click', async () => {
         const actId = document.getElementById('att_act_id_teacher').value;
         const resp = await apiCall(`/api/attendance/activity/${actId}`);
         let data = await resp.json();
-        // оставляем только детей из моего отряда
+        // РѕСЃС‚Р°РІР»СЏРµРј С‚РѕР»СЊРєРѕ РґРµС‚РµР№ РёР· РјРѕРµРіРѕ РѕС‚СЂСЏРґР°
         const myChildrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}&group_id=${myGroupId}`);
         const myChildren = await myChildrenResp.json();
         const myChildIds = new Set(myChildren.map(c => c.id));
         data = data.filter(item => myChildIds.has(item.child_id));
-        let formHtml = `<form id="attFormTeacher"><table><tr><th>Ребёнок</th><th>Участвовал</th></tr>`;
+        let formHtml = `<form id="attFormTeacher"><table><tr><th>Р РµР±С‘РЅРѕРє</th><th>РЈС‡Р°СЃС‚РІРѕРІР°Р»</th></tr>`;
         for (let item of data) {
             formHtml += `<tr><td>${item.child_name}</td><td><input type="checkbox" data-child="${item.child_id}" ${item.participated ? 'checked' : ''}></td></tr>`;
         }
-        formHtml += `</table><button type="submit">Сохранить</button></form>`;
+        formHtml += `</table><button type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ</button></form>`;
         document.getElementById('attendance-area-teacher').innerHTML = formHtml;
         document.getElementById('attFormTeacher').addEventListener('submit', async (e) => {
             e.preventDefault();
             const marks = Array.from(document.querySelectorAll('#attFormTeacher input[type="checkbox"]')).map(cb => ({ child_id: parseInt(cb.dataset.child), participated: cb.checked }));
             await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
-            alert('Сохранено');
+            alert('РЎРѕС…СЂР°РЅРµРЅРѕ');
         });
     });
 }
 
-// ----- ВОЖАТЫЙ: отчёт по своему отряду -----
+// ----- Р’РћР–РђРўР«Р™: РѕС‚С‡С‘С‚ РїРѕ СЃРІРѕРµРјСѓ РѕС‚СЂСЏРґСѓ -----
 async function renderReportTeacher(container) {
-    container.innerHTML = `<h2>Отчёт по активности (мой отряд)</h2>
-        <div class="form-group"><label>Дата от</label><input type="date" id="report_from"></div>
-        <div class="form-group"><label>Дата до</label><input type="date" id="report_to"></div>
-        <button id="generateTeacherReport">Сформировать</button>
+    container.innerHTML = `<h2>РћС‚С‡С‘С‚ РїРѕ Р°РєС‚РёРІРЅРѕСЃС‚Рё (РјРѕР№ РѕС‚СЂСЏРґ)</h2>
+        <div class="form-group"><label>Р”Р°С‚Р° РѕС‚</label><input type="date" id="report_from"></div>
+        <div class="form-group"><label>Р”Р°С‚Р° РґРѕ</label><input type="date" id="report_to"></div>
+        <button id="generateTeacherReport">РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ</button>
         <div id="reportResult"></div>`;
     document.getElementById('generateTeacherReport').addEventListener('click', async () => {
         const date_from = document.getElementById('report_from').value;
@@ -740,7 +740,7 @@ async function renderReportTeacher(container) {
         const body = { shift_id: activeShiftId, group_id: myGroupId, date_from, date_to };
         const resp = await apiCall('/api/reports/activity', { method: 'POST', body: JSON.stringify(body) });
         const data = await resp.json();
-        let html = `<table><thead><tr><th>Ребёнок</th><th>Посещено</th><th>Всего</th><th>%</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Р РµР±С‘РЅРѕРє</th><th>РџРѕСЃРµС‰РµРЅРѕ</th><th>Р’СЃРµРіРѕ</th><th>%</th></tr></thead><tbody>`;
         for (let row of data) {
             html += `<tr><td>${row.child_name}</td><td>${row.attended_count}</td><td>${row.total_activities}</td><td>${row.percent}%</td></tr>`;
         }
@@ -749,7 +749,7 @@ async function renderReportTeacher(container) {
     });
 }
 
-// ----- ВОЖАТЫЙ: расписание (режим дня + мероприятия) -----
+// ----- Р’РћР–РђРўР«Р™: СЂР°СЃРїРёСЃР°РЅРёРµ (СЂРµР¶РёРј РґРЅСЏ + РјРµСЂРѕРїСЂРёСЏС‚РёСЏ) -----
 async function renderSchedule(container) {
     const [routinesResp, actsResp] = await Promise.all([
         apiCall(`/api/routines?shift_id=${activeShiftId}`),
@@ -757,28 +757,28 @@ async function renderSchedule(container) {
     ]);
     const routines = await routinesResp.json();
     let activities = await actsResp.json();
-    // фильтруем мероприятия для его отряда
+    // С„РёР»СЊС‚СЂСѓРµРј РјРµСЂРѕРїСЂРёСЏС‚РёСЏ РґР»СЏ РµРіРѕ РѕС‚СЂСЏРґР°
     const filteredActs = [];
     for (let act of activities) {
         const partResp = await apiCall(`/api/activities/${act.id}/groups`);
         const groups = await partResp.json();
         if (groups.some(g => g.id === myGroupId)) filteredActs.push(act);
     }
-    let html = `<h2>Расписание на сегодня (пример)</h2>
-        <h3>Режим дня</h3><ul>${routines.map(r => `<li>${r.time} — ${r.name}</li>`).join('')}</ul>
-        <h3>Мероприятия для моего отряда</h3><ul>${filteredActs.map(a => `<li>${a.date} ${a.start_time} — ${a.title} (${a.location||''})</li>`).join('')}</ul>`;
+    let html = `<h2>Р Р°СЃРїРёСЃР°РЅРёРµ РЅР° СЃРµРіРѕРґРЅСЏ (РїСЂРёРјРµСЂ)</h2>
+        <h3>Р РµР¶РёРј РґРЅСЏ</h3><ul>${routines.map(r => `<li>${r.time} вЂ” ${r.name}</li>`).join('')}</ul>
+        <h3>РњРµСЂРѕРїСЂРёСЏС‚РёСЏ РґР»СЏ РјРѕРµРіРѕ РѕС‚СЂСЏРґР°</h3><ul>${filteredActs.map(a => `<li>${a.date} ${a.start_time} вЂ” ${a.title} (${a.location||''})</li>`).join('')}</ul>`;
     container.innerHTML = html;
 }
 
-// ----- ОТЧЁТ для админа/орг (полный) -----
+// ----- РћРўР§РЃРў РґР»СЏ Р°РґРјРёРЅР°/РѕСЂРі (РїРѕР»РЅС‹Р№) -----
 async function renderReportAdmin(container) {
     const groupsResp = await apiCall(`/api/groups?shift_id=${activeShiftId}`);
     const groups = await groupsResp.json();
-    container.innerHTML = `<h2>Отчёт по активности</h2>
-        <div class="form-group"><label>Дата от</label><input type="date" id="report_from"></div>
-        <div class="form-group"><label>Дата до</label><input type="date" id="report_to"></div>
-        <div class="form-group"><label>Отряд</label><select id="report_group"><option value="">Все</option>${groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
-        <button id="generateReportAll">Сформировать</button>
+    container.innerHTML = `<h2>РћС‚С‡С‘С‚ РїРѕ Р°РєС‚РёРІРЅРѕСЃС‚Рё</h2>
+        <div class="form-group"><label>Р”Р°С‚Р° РѕС‚</label><input type="date" id="report_from"></div>
+        <div class="form-group"><label>Р”Р°С‚Р° РґРѕ</label><input type="date" id="report_to"></div>
+        <div class="form-group"><label>РћС‚СЂСЏРґ</label><select id="report_group"><option value="">Р’СЃРµ</option>${groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}</select></div>
+        <button id="generateReportAll">РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ</button>
         <div id="reportResult"></div>`;
     document.getElementById('generateReportAll').addEventListener('click', async () => {
         const date_from = document.getElementById('report_from').value;
@@ -788,7 +788,7 @@ async function renderReportAdmin(container) {
         if (group_id) body.group_id = parseInt(group_id);
         const resp = await apiCall('/api/reports/activity', { method: 'POST', body: JSON.stringify(body) });
         const data = await resp.json();
-        let html = `<table><thead><tr><th>Ребёнок</th><th>Отряд</th><th>Посещено</th><th>Всего</th><th>%</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Р РµР±С‘РЅРѕРє</th><th>РћС‚СЂСЏРґ</th><th>РџРѕСЃРµС‰РµРЅРѕ</th><th>Р’СЃРµРіРѕ</th><th>%</th></tr></thead><tbody>`;
         for (let row of data) {
             html += `<tr><td>${row.child_name}</td><td>${row.group_name}</td><td>${row.attended_count}</td><td>${row.total_activities}</td><td>${row.percent}%</td></tr>`;
         }
@@ -800,51 +800,51 @@ async function renderReportAdmin(container) {
 async function renderStaff(container) {
     const resp = await apiCall('/api/auth/users');
     if (!resp.ok) {
-        container.innerHTML = '<p>Ошибка загрузки сотрудников</p>';
+        container.innerHTML = '<p>РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ</p>';
         return;
     }
     const users = await resp.json();
     const canEdit = currentUser.role === 'admin';
 
-    let html = `<h2>Сотрудники лагеря</h2>`;
+    let html = `<h2>РЎРѕС‚СЂСѓРґРЅРёРєРё Р»Р°РіРµСЂСЏ</h2>`;
 
     if (canEdit) {
         html += `<div class="batch-actions">
-            <button id="showAddStaffFormBtn" style="background:#10b981;">? Добавить сотрудника</button>
+            <button id="showAddStaffFormBtn" style="background:#10b981;">? Р”РѕР±Р°РІРёС‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°</button>
         </div>`;
     }
 
-    // Форма добавления (скрыта)
+    // Р¤РѕСЂРјР° РґРѕР±Р°РІР»РµРЅРёСЏ (СЃРєСЂС‹С‚Р°)
     html += `<div id="addStaffForm" style="display:none;" class="form-card">
-                <h3>Новый сотрудник</h3>
-                <div class="form-group"><label>ФИО *</label><input id="staff_full_name"></div>
+                <h3>РќРѕРІС‹Р№ СЃРѕС‚СЂСѓРґРЅРёРє</h3>
+                <div class="form-group"><label>Р¤РРћ *</label><input id="staff_full_name"></div>
                 <div class="form-group"><label>Email *</label><input id="staff_email" type="email"></div>
-                <div class="form-group"><label>Пароль *</label><input id="staff_password" type="password"></div>
-                <div class="form-group"><label>Роль</label>
+                <div class="form-group"><label>РџР°СЂРѕР»СЊ *</label><input id="staff_password" type="password"></div>
+                <div class="form-group"><label>Р РѕР»СЊ</label>
                     <select id="staff_role">
-                        <option value="teacher">Вожатый</option>
-                        <option value="org">Организатор</option>
-                        <option value="admin">Администратор</option>
-                        <option value="viewer">Наблюдатель</option>
+                        <option value="teacher">Р’РѕР¶Р°С‚С‹Р№</option>
+                        <option value="org">РћСЂРіР°РЅРёР·Р°С‚РѕСЂ</option>
+                        <option value="admin">РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ</option>
+                        <option value="viewer">РќР°Р±Р»СЋРґР°С‚РµР»СЊ</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Должность</label><input id="staff_position"></div>
-                <div class="form-group"><label>Телефон</label><input id="staff_phone"></div>
-                <button id="submitStaffBtn">Сохранить</button>
-                <button id="cancelStaffBtn" style="background:#64748b;">Отмена</button>
+                <div class="form-group"><label>Р”РѕР»Р¶РЅРѕСЃС‚СЊ</label><input id="staff_position"></div>
+                <div class="form-group"><label>РўРµР»РµС„РѕРЅ</label><input id="staff_phone"></div>
+                <button id="submitStaffBtn">РЎРѕС…СЂР°РЅРёС‚СЊ</button>
+                <button id="cancelStaffBtn" style="background:#64748b;">РћС‚РјРµРЅР°</button>
             </div>`;
 
-    // Таблица сотрудников (как в детях, но без чекбоксов)
+    // РўР°Р±Р»РёС†Р° СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ (РєР°Рє РІ РґРµС‚СЏС…, РЅРѕ Р±РµР· С‡РµРєР±РѕРєСЃРѕРІ)
     html += `<div style="overflow-x:auto;">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>ФИО</th>
+                    <th>Р¤РРћ</th>
                     <th>Email</th>
-                    <th>Роль</th>
-                    <th>Должность</th>
-                    <th>Телефон</th>
-                    ${canEdit ? '<th>Действие</th>' : ''}
+                    <th>Р РѕР»СЊ</th>
+                    <th>Р”РѕР»Р¶РЅРѕСЃС‚СЊ</th>
+                    <th>РўРµР»РµС„РѕРЅ</th>
+                    ${canEdit ? '<th>Р”РµР№СЃС‚РІРёРµ</th>' : ''}
                 </tr>
             </thead>
             <tbody id="staffTableBody">`;
@@ -856,7 +856,7 @@ async function renderStaff(container) {
                     <td>${u.role}</td>
                     <td>${escapeHtml(u.position || '')}</td>
                     <td>${escapeHtml(u.phone || '')}</td>
-                    ${canEdit ? `<td class="action-icons"><button class="icon-btn danger delete-staff" data-id="${u.id}" data-name="${escapeHtml(u.full_name)}" title="Удалить">???</button></td>` : ''}
+                    ${canEdit ? `<td class="action-icons"><button class="icon-btn danger delete-staff" data-id="${u.id}" data-name="${escapeHtml(u.full_name)}" title="РЈРґР°Р»РёС‚СЊ">???</button></td>` : ''}
                 </tr>`;
     }
     html += `</tbody>
@@ -866,7 +866,7 @@ async function renderStaff(container) {
 
     if (!canEdit) return;
 
-    // --- Управление формой добавления (как в детях) ---
+    // --- РЈРїСЂР°РІР»РµРЅРёРµ С„РѕСЂРјРѕР№ РґРѕР±Р°РІР»РµРЅРёСЏ (РєР°Рє РІ РґРµС‚СЏС…) ---
     const showFormBtn = document.getElementById('showAddStaffFormBtn');
     const formDiv = document.getElementById('addStaffForm');
     const cancelBtn = document.getElementById('cancelStaffBtn');
@@ -881,7 +881,7 @@ async function renderStaff(container) {
         });
     }
 
-    // --- Добавление сотрудника (как в детях, с очисткой формы) ---
+    // --- Р”РѕР±Р°РІР»РµРЅРёРµ СЃРѕС‚СЂСѓРґРЅРёРєР° (РєР°Рє РІ РґРµС‚СЏС…, СЃ РѕС‡РёСЃС‚РєРѕР№ С„РѕСЂРјС‹) ---
     const submitBtn = document.getElementById('submitStaffBtn');
     if (submitBtn) {
         submitBtn.addEventListener('click', async () => {
@@ -889,7 +889,7 @@ async function renderStaff(container) {
             const email = document.getElementById('staff_email').value.trim();
             const password = document.getElementById('staff_password').value.trim();
             if (!full_name || !email || !password) {
-                alert('Заполните ФИО, Email и пароль');
+                alert('Р—Р°РїРѕР»РЅРёС‚Рµ Р¤РРћ, Email Рё РїР°СЂРѕР»СЊ');
                 return;
             }
             const role = document.getElementById('staff_role').value;
@@ -898,30 +898,30 @@ async function renderStaff(container) {
             const body = { full_name, email, password, role, position, phone };
             const response = await apiCall('/api/auth/users', { method: 'POST', body: JSON.stringify(body) });
             if (response.ok) {
-                alert('Сотрудник добавлен');
+                alert('РЎРѕС‚СЂСѓРґРЅРёРє РґРѕР±Р°РІР»РµРЅ');
                 formDiv.style.display = 'none';
-                // Очистка формы
+                // РћС‡РёСЃС‚РєР° С„РѕСЂРјС‹
                 document.getElementById('staff_full_name').value = '';
                 document.getElementById('staff_email').value = '';
                 document.getElementById('staff_password').value = '';
                 document.getElementById('staff_position').value = '';
                 document.getElementById('staff_phone').value = '';
-                await loadTabContent('staff'); // перезагружаем таблицу
+                await loadTabContent('staff'); // РїРµСЂРµР·Р°РіСЂСѓР¶Р°РµРј С‚Р°Р±Р»РёС†Сѓ
             } else {
                 const errText = await response.text();
-                alert('Ошибка: ' + errText);
+                alert('РћС€РёР±РєР°: ' + errText);
             }
         });
     }
 
-    // --- Удаление сотрудника (одиночное, с анимацией как у детей) ---
+    // --- РЈРґР°Р»РµРЅРёРµ СЃРѕС‚СЂСѓРґРЅРёРєР° (РѕРґРёРЅРѕС‡РЅРѕРµ, СЃ Р°РЅРёРјР°С†РёРµР№ РєР°Рє Сѓ РґРµС‚РµР№) ---
     document.querySelectorAll('.delete-staff').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (!confirm(`Удалить сотрудника "${name}"?`)) return;
+            if (!confirm(`РЈРґР°Р»РёС‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР° "${name}"?`)) return;
             const row = btn.closest('tr');
-            // Анимация как у детей
+            // РђРЅРёРјР°С†РёСЏ РєР°Рє Сѓ РґРµС‚РµР№
             row.style.transition = 'opacity 0.2s';
             row.style.opacity = '0.5';
             const delResp = await apiCall(`/api/auth/users/${id}`, { method: 'DELETE' });
@@ -931,74 +931,74 @@ async function renderStaff(container) {
                 row.style.transform = 'scale(0.95)';
                 setTimeout(() => {
                     if (row && row.parentNode) row.remove();
-                    // Если таблица пуста – показать сообщение
+                    // Р•СЃР»Рё С‚Р°Р±Р»РёС†Р° РїСѓСЃС‚Р° вЂ“ РїРѕРєР°Р·Р°С‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ
                     if (document.querySelectorAll('#staffTableBody tr').length === 0) {
-                        document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="6">Нет сотрудников</td</tr>';
+                        document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="6">РќРµС‚ СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ</td</tr>';
                     }
                 }, 200);
             } else {
-                alert('Ошибка удаления');
+                alert('РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ');
                 row.style.opacity = '1';
             }
         });
     });
 }
 
-// ----- УПРАВЛЕНИЕ СМЕНАМИ (только админ) -----
+// ----- РЈРџР РђР’Р›Р•РќРР• РЎРњР•РќРђРњР (С‚РѕР»СЊРєРѕ Р°РґРјРёРЅ) -----
 async function renderShifts(container) {
     const resp = await apiCall('/api/shifts/');
     const shifts = await resp.json();
-    let html = `<h2>Управление сменами</h2>
+    let html = `<h2>РЈРїСЂР°РІР»РµРЅРёРµ СЃРјРµРЅР°РјРё</h2>
         <div class="form-card">
-            <h3>? Создать новую смену</h3>
-            <div class="form-group"><label>Название</label><input id="shift_name" placeholder="Лето 2025"></div>
-            <div class="form-group"><label>Дата начала</label><input type="date" id="shift_start"></div>
-            <div class="form-group"><label>Дата окончания</label><input type="date" id="shift_end"></div>
-            <div class="form-group"><label><input type="checkbox" id="shift_active"> Сделать активной</label></div>
-            <button id="createShiftBtn">Создать</button>
+            <h3>? РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ СЃРјРµРЅСѓ</h3>
+            <div class="form-group"><label>РќР°Р·РІР°РЅРёРµ</label><input id="shift_name" placeholder="Р›РµС‚Рѕ 2025"></div>
+            <div class="form-group"><label>Р”Р°С‚Р° РЅР°С‡Р°Р»Р°</label><input type="date" id="shift_start"></div>
+            <div class="form-group"><label>Р”Р°С‚Р° РѕРєРѕРЅС‡Р°РЅРёСЏ</label><input type="date" id="shift_end"></div>
+            <div class="form-group"><label><input type="checkbox" id="shift_active"> РЎРґРµР»Р°С‚СЊ Р°РєС‚РёРІРЅРѕР№</label></div>
+            <button id="createShiftBtn">РЎРѕР·РґР°С‚СЊ</button>
         </div>
-        <h3>?? Список смен</h3>
+        <h3>?? РЎРїРёСЃРѕРє СЃРјРµРЅ</h3>
         <table>
-            <thead><tr><th>ID</th><th>Название</th><th>Период</th><th>Активна</th><th>Действие</th></tr></thead>
+            <thead><tr><th>ID</th><th>РќР°Р·РІР°РЅРёРµ</th><th>РџРµСЂРёРѕРґ</th><th>РђРєС‚РёРІРЅР°</th><th>Р”РµР№СЃС‚РІРёРµ</th></tr></thead>
             <tbody>`;
     for (let s of shifts) {
         html += `<tr>
             <td>${s.id}</td>
             <td>${escapeHtml(s.name)}</td>
-            <td>${s.start_date} — ${s.end_date}</td>
-            <td>${s.is_active ? '? Да' : '? Нет'}</td>
+            <td>${s.start_date} вЂ” ${s.end_date}</td>
+            <td>${s.is_active ? '? Р”Р°' : '? РќРµС‚'}</td>
             <td>
-                ${!s.is_active ? `<button class="activate-shift" data-id="${s.id}">?? Активировать</button>` : ''}
-                <button class="danger delete-shift" data-id="${s.id}" data-name="${escapeHtml(s.name)}">??? Удалить</button>
+                ${!s.is_active ? `<button class="activate-shift" data-id="${s.id}">?? РђРєС‚РёРІРёСЂРѕРІР°С‚СЊ</button>` : ''}
+                <button class="danger delete-shift" data-id="${s.id}" data-name="${escapeHtml(s.name)}">??? РЈРґР°Р»РёС‚СЊ</button>
             </td>
         </tr>`;
     }
     html += `</tbody></table>`;
     container.innerHTML = html;
 
-    // Создание смены
+    // РЎРѕР·РґР°РЅРёРµ СЃРјРµРЅС‹
     document.getElementById('createShiftBtn').addEventListener('click', async () => {
         const name = document.getElementById('shift_name').value.trim();
         const start_date = document.getElementById('shift_start').value;
         const end_date = document.getElementById('shift_end').value;
         const is_active = document.getElementById('shift_active').checked;
-        if (!name || !start_date || !end_date) return alert('Заполните все поля');
+        if (!name || !start_date || !end_date) return alert('Р—Р°РїРѕР»РЅРёС‚Рµ РІСЃРµ РїРѕР»СЏ');
         const resp = await apiCall('/api/shifts/', {
             method: 'POST',
             body: JSON.stringify({ name, start_date, end_date, is_active })
         });
         if (resp.ok) {
             await loadTabContent('shifts');
-            // Если создали активную смену, перезагрузим активную смену для всего приложения
+            // Р•СЃР»Рё СЃРѕР·РґР°Р»Рё Р°РєС‚РёРІРЅСѓСЋ СЃРјРµРЅСѓ, РїРµСЂРµР·Р°РіСЂСѓР·РёРј Р°РєС‚РёРІРЅСѓСЋ СЃРјРµРЅСѓ РґР»СЏ РІСЃРµРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
             await loadActiveShift();
-            // Перестроим главное меню (чтобы обновилась активная смена)
+            // РџРµСЂРµСЃС‚СЂРѕРёРј РіР»Р°РІРЅРѕРµ РјРµРЅСЋ (С‡С‚РѕР±С‹ РѕР±РЅРѕРІРёР»Р°СЃСЊ Р°РєС‚РёРІРЅР°СЏ СЃРјРµРЅР°)
             renderMain();
         } else {
-            alert('Ошибка создания');
+            alert('РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ');
         }
     });
 
-    // Активация смены
+    // РђРєС‚РёРІР°С†РёСЏ СЃРјРµРЅС‹
     document.querySelectorAll('.activate-shift').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
@@ -1007,25 +1007,25 @@ async function renderShifts(container) {
                 await loadActiveShift();
                 renderMain();
             } else {
-                alert('Ошибка активации');
+                alert('РћС€РёР±РєР° Р°РєС‚РёРІР°С†РёРё');
             }
         });
     });
 
-    // Удаление смены
+    // РЈРґР°Р»РµРЅРёРµ СЃРјРµРЅС‹
     document.querySelectorAll('.delete-shift').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (confirm(`Удалить смену "${name}"? Все связанные данные (дети, отряды, мероприятия) будут удалены!`)) {
+            if (confirm(`РЈРґР°Р»РёС‚СЊ СЃРјРµРЅСѓ "${name}"? Р’СЃРµ СЃРІСЏР·Р°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ (РґРµС‚Рё, РѕС‚СЂСЏРґС‹, РјРµСЂРѕРїСЂРёСЏС‚РёСЏ) Р±СѓРґСѓС‚ СѓРґР°Р»РµРЅС‹!`)) {
                 const resp = await apiCall(`/api/shifts/${id}`, { method: 'DELETE' });
                 if (resp.ok) {
                     await loadTabContent('shifts');
-                    // Если удалили активную смену, возможно, больше нет активной
+                    // Р•СЃР»Рё СѓРґР°Р»РёР»Рё Р°РєС‚РёРІРЅСѓСЋ СЃРјРµРЅСѓ, РІРѕР·РјРѕР¶РЅРѕ, Р±РѕР»СЊС€Рµ РЅРµС‚ Р°РєС‚РёРІРЅРѕР№
                     await loadActiveShift();
                     renderMain();
                 } else {
-                    alert('Ошибка удаления');
+                    alert('РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ');
                 }
             }
         });
@@ -1042,7 +1042,7 @@ function escapeHtml(str) {
     });
 }
 
-// --- инициализация ---
+// --- РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ ---
 if (token) {
     loadUser().then(async () => {
         if (currentUser) {
