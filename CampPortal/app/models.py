@@ -1,6 +1,19 @@
 from sqlalchemy import Column, Integer, String, Boolean, Date, Time, ForeignKey, Text, TIMESTAMP
 from sqlalchemy.sql import func
 from app.database import Base
+from sqlalchemy.orm import relationship
+
+class Group(Base):
+    __tablename__ = "groups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), nullable=False)
+    shift_id = Column(Integer, ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
+    age_range = Column(String(50))
+
+    # Используем строковые названия таблиц
+    children = relationship("Child", secondary="group_memberships", lazy="joined")
+    staff = relationship("User", secondary="group_staff", lazy="joined")
 
 class Shift(Base):
     __tablename__ = "shifts"
@@ -33,13 +46,6 @@ class Child(Base):
     arrival_date = Column(Date)
     departure_date = Column(Date)
     status = Column(String(20), default="active")
-
-class Group(Base):
-    __tablename__ = "groups"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), nullable=False)
-    shift_id = Column(Integer, ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
-    age_range = Column(String(50))
 
 class GroupMembership(Base):
     __tablename__ = "group_memberships"

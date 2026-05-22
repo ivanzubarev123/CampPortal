@@ -50,6 +50,13 @@ class GroupCreate(BaseModel):
 
 class GroupOut(GroupCreate):
     id: int
+    
+    # --- ДОБАВЛЕНЫ СПИСКИ ---
+    children: List[ChildOut] = []
+    staff: List[UserOut] = []
+
+    class Config:
+        from_attributes = True
 
 # --- Activity ---
 class ActivityCreate(BaseModel):
