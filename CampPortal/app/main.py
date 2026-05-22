@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from app.routes import routine
 
 from app.database import engine, Base
 from app.routes import (
@@ -27,6 +28,7 @@ app.include_router(attendance.router, prefix="/api/attendance", tags=["attendanc
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(shifts.router, prefix="/api/shifts", tags=["shifts"])
+app.include_router(routine.router, prefix="/api/routines", tags=["routines"])
 
 # 5. страницы
 @app.get("/")
