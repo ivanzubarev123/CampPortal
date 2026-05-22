@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
 from app.database import engine, Base
 from app.routes import (
@@ -36,3 +37,7 @@ def startup_event():
     # контролируемый seed
     if os.getenv("RUN_SEED") == "true":
         seed()
+
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
