@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.routes import routine
+from app.seed import seed
 
 from app.database import engine, Base
 from app.routes import (
