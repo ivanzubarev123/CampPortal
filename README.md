@@ -17,7 +17,6 @@
 ## Стек технологий
 
 - Python
-- Flask
 - Jinja2
 - PostgreSQL
 - psycopg2
@@ -41,9 +40,9 @@
 
 | Логин | Пароль | Роль |
 |---|---|---|
-| admin | admin123 | Администратор |
-| senior | senior123 | Старший воспитатель |
-| counselor | counselor123 | Вожатый |
+| admin@camp.ru | admin123 | Администратор |
+| teacher1@camp.ru | teacher123 |  Вожатый |
+| org@camp.ru | org123 | Организатор |
 
 ## Статус проекта
 
