@@ -24,7 +24,7 @@
 
 - **Python 3.12** — основной язык серверной логики.
 - **FastAPI** — высокопроизводительный асинхронный веб-фреймворк для REST API.
-- **PostgreSQL** — надежная реляционная СУБД для хранения данных.
+- **[PostgreSQL](DB.md/)** — надежная реляционная СУБД для хранения данных.
 - **SQLAlchemy (ORM)** — связующее звено между базой данных и объектами Python.
 - **Vanilla JS** — клиентская часть (SPA), реализованная на нативном JavaScript.
 - **JWT (JSON Web Token)** — безопасная аутентификация и хранение сессий в LocalStorage
@@ -56,14 +56,19 @@
 ---
 ## Команда
 
--  [Зубарев Иван](https://github.com/ivanzubarev123)
--  [Макушников Максим](https://github.com/Maksim-Makushnikov)
--  [Меркутова Кристина](https://github.com/KrisMeeer)
--  [Плаксин Андрей](https://github.com/4IVU)
--  [Коваленко Максим](https://github.com/00Shizik00)
+| Участник | Зона ответственности |
+|---|---|
+| [Плаксин Андрей](https://github.com/4IVU) | Документация |
+| [Меркутова Кристина](https://github.com/KrisMeeer) | Отчет по проделанной работе |
+| [Зубарев Иван](https://github.com/ivanzubarev123) | Backend, база данных, деплой |
+| [Макушников Максим](https://github.com/Maksim-Makushnikov), [Коваленко Максим](https://github.com/00Shizik00) | Frontend, шаблоны, CSS, тестирование |
+
 
 ## Документация
 - [Техническое задание]
+- [Требования к системе](System_requirements.md/)
+- [План разработки проекта](Project_development_plan.md/)
+- [Описание страниц интерфейса](UI.md/)
 - [Диаграммы](diagrams/)
 - [Курсовой проект](https://github.com/user-attachments/files/28412143/CampPortal.pdf)
 
