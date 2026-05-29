@@ -1,26 +1,25 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
+from app.routes import routine
 
 from app.database import engine, Base
 from app.routes import (
     auth, children, groups, activities,
-    attendance, reports, dashboard, shifts, routine
+    attendance, reports, dashboard, shifts
 )
 
-import os
-from app.seed import seed
-
+# 1. создаём app СРАЗУ
 app = FastAPI(title="Camp Management API")
 
+# 2. templates и static
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-if os.getenv("ENV") != "production":
-    Base.metadata.create_all(bind=engine)
+# 3. база
+Base.metadata.create_all(bind=engine)
 
-# Роуты
+# 4. роуты
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(children.router, prefix="/api/children", tags=["children"])
 app.include_router(groups.router, prefix="/api/groups", tags=["groups"])
@@ -31,13 +30,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(shifts.router, prefix="/api/shifts", tags=["shifts"])
 app.include_router(routine.router, prefix="/api/routines", tags=["routines"])
 
-
-@app.on_event("startup")
-def startup_event():
-    # контролируемый seed
-    if os.getenv("RUN_SEED") == "true":
-        seed()
-
+# 5. страницы
 @app.get("/")
-def home(request: Request):
+async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})

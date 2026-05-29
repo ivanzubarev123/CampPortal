@@ -1,17 +1,38 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, Time, ForeignKey, Text, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, Date, Time, ForeignKey, Text, TIMESTAMP, Enum
 from sqlalchemy.sql import func
 from app.database import Base
 from sqlalchemy.orm import relationship
+from sqlalchemy import Enum
+from enum import Enum as PyEnum
+
+class ActivityType(str, PyEnum):
+    SPORT = "спорт"
+    CONCERT = "концерт"
+    MASTER_CLASS = "мастер-класс"
+    EXCURSION = "экскурсия"
+    GAME = "игра"
+    COMPETITION = "соревнование"
+    OTHER = "другое"
+
+
+class ActivityLocation(str, PyEnum):
+    ASSEMBLY_HALL = "актовый зал"
+    SPORTS_GROUND = "спортивная площадка"
+    CANTEEN = "столовая"
+    GROUP_BUILDING = "корпус отряда"
+    LIBRARY = "библиотека"
+    MEDICAL_ROOM = "медицинский пункт"
+    PLAYROOM = "игровая комната"
+    OUTSIDE = "улица"
+    OTHER = "другое"
 
 class Group(Base):
     __tablename__ = "groups"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     shift_id = Column(Integer, ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
-    age_range = Column(String(50))
-
-    # Используем строковые названия таблиц
+    min_age = Column(Integer, nullable=True)
+    max_age = Column(Integer, nullable=True)
     children = relationship("Child", secondary="group_memberships", lazy="joined")
     staff = relationship("User", secondary="group_staff", lazy="joined")
 
@@ -71,12 +92,13 @@ class Activity(Base):
     __tablename__ = "activities"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
-    type = Column(String(50))
+    type = Column(Enum( ActivityType, name="activity_type", values_callable=lambda enum: [e.value for e in enum] ), nullable=True)
     date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
-    location = Column(String(100))
+    location = Column(Enum( ActivityLocation, name="activity_location", values_callable=lambda enum: [e.value for e in enum] ), nullable=True)
     shift_id = Column(Integer, ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
+    participants = relationship("ActivityParticipant", cascade="all, delete-orphan", lazy="joined")
 
 class ActivityParticipant(Base):
     __tablename__ = "activity_participants"

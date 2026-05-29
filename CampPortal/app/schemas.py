@@ -1,105 +1,134 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, Field
 from datetime import date, time
-from typing import Optional, List
+from datetime import date as dt_date, time as dt_time
+from app.models import ActivityLocation, ActivityType
 
-# --- User ---
 class UserCreate(BaseModel):
     full_name: str
-    position: Optional[str] = None
+    position: str | None = None
     role: str
     email: str
-    phone: Optional[str] = None
+    phone: str | None = None
     password: str
+
 
 class UserOut(BaseModel):
     id: int
     full_name: str
-    position: Optional[str]
+    position: str | None = None
     role: str
     email: str
-    phone: Optional[str]
+    phone: str | None = None
+
+    model_config = {"from_attributes": True}
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class LoginRequest(BaseModel):
     email: str
     password: str
 
-# --- Child ---
 class ChildCreate(BaseModel):
     full_name: str
-    birth_date: Optional[date] = None
-    parent_phone: Optional[str] = None
-    parent_name: Optional[str] = None
-    medical_notes: Optional[str] = None
+    birth_date: date | None = None
+    parent_phone: str | None = None
+    parent_name: str | None = None
+    medical_notes: str | None = None
     shift_id: int
-    arrival_date: Optional[date] = None
-    departure_date: Optional[date] = None
+    arrival_date: date | None = None
+    departure_date: date | None = None
 
-class ChildOut(ChildCreate):
+
+class ChildOut(BaseModel):
     id: int
+    full_name: str
+    birth_date: date | None = None
+    parent_phone: str | None = None
+    parent_name: str | None = None
+    medical_notes: str | None = None
+    shift_id: int
+    arrival_date: date | None = None
+    departure_date: date | None = None
     status: str
 
-# --- Group ---
+    model_config = {"from_attributes": True}
+
 class GroupCreate(BaseModel):
     name: str
     shift_id: int
-    age_range: Optional[str] = None
+    min_age: int | None = None
+    max_age: int | None = None
 
-class GroupOut(GroupCreate):
+    @field_validator("max_age")
+    @classmethod
+    def validate_age_range(cls, v, info):
+        min_age = info.data.get("min_age")
+
+        if v is not None and min_age is not None:
+            if v < min_age:
+                raise ValueError("max_age не может быть меньше min_age")
+
+        return v
+
+
+class GroupOut(BaseModel):
     id: int
-    
-    # --- ДОБАВЛЕНЫ СПИСКИ ---
-    children: List[ChildOut] = []
-    staff: List[UserOut] = []
+    name: str
+    shift_id: int
+    min_age: int | None = None
+    max_age: int | None = None
 
-    class Config:
-        from_attributes = True
+    children: list[ChildOut] = Field(default_factory=list)
+    staff: list[UserOut] = Field(default_factory=list)
 
-# --- Activity ---
-class ActivityCreate(BaseModel):
+    model_config = {"from_attributes": True}
+
+class ActivityBase(BaseModel):
     title: str
-    type: Optional[str] = None
+    type: ActivityType | None = None
     date: date
     start_time: time
-    location: Optional[str] = None
+    location: ActivityLocation | None = None
     shift_id: int
-    group_ids: List[int]   # какие отряды участвуют
 
-class ActivityOut(BaseModel):
+
+class ActivityCreate(ActivityBase):
+    group_ids: list[int]
+
+
+class ActivityUpdate(BaseModel):
+    title: str | None = None
+    type: str | None = None
+    date: dt_date | None = None
+    start_time: dt_time | None = None
+    location: ActivityLocation | None = None
+    group_ids: list[int] | None = None
+
+
+class ActivityOut(ActivityBase):
     id: int
-    title: str
-    type: Optional[str]
-    date: date
-    start_time: time
-    location: Optional[str]
-    shift_id: int
-    created_by: Optional[int]
+    created_by: int | None = None
 
-# --- Attendance ---
+    model_config = {
+        "from_attributes": True,
+        "use_enum_values": True
+    }
+
 class AttendanceMark(BaseModel):
     child_id: int
     participated: bool
 
+
 class AttendanceBatch(BaseModel):
-    marks: List[AttendanceMark]
+    marks: list[AttendanceMark]
 
-# Добавить в конец файла app/schemas.py
 
-# --- Activity (дополнение) ---
-class ActivityUpdate(BaseModel):
-    title: Optional[str] = None
-    type: Optional[str] = None
-    date: Optional[date] = None # type: ignore
-    start_time: Optional[time] = None
-    location: Optional[str] = None
-    group_ids: Optional[List[int]] = None
-
-# --- Attendance ---
 class AttendanceMarkSingle(BaseModel):
     participated: bool
+
 
 class AttendanceReportRow(BaseModel):
     child_id: int
@@ -109,26 +138,21 @@ class AttendanceReportRow(BaseModel):
     total_activities: int
     percent: float
 
-# --- Reports ---
 class ReportRequest(BaseModel):
     shift_id: int
-    group_id: Optional[int] = None
-    child_id: Optional[int] = None
+    group_id: int | None = None
+    child_id: int | None = None
     date_from: date
     date_to: date
 
-# --- Dashboard ---
 class UpcomingEvent(BaseModel):
-    type: str  # "routine" или "activity"
+    type: str
     name: str
     time: str
     date: date
-    location: Optional[str] = None
+    location: str | None = None
 
-# --- GroupStaff ---
 class GroupStaffAssign(BaseModel):
     user_id: int
-
-# --- Child assignment to group ---
 class ChildGroupAssign(BaseModel):
     child_id: int
