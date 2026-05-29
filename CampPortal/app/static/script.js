@@ -2,14 +2,19 @@
 let token = localStorage.getItem('access_token');
 let currentUser = null;
 let activeShiftId = null;
-let myGroupId = null;        // для вожатого
+let myGroupId = null;
+let activeShiftStart = null;
+let activeShiftEnd = null;
 
 // --- вспомогательные функции API ---
 async function apiCall(url, options = {}) {
     const headers = { 'Content-Type': 'application/json', ...options.headers };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const resp = await fetch(url, { ...options, headers });
-    if (resp.status === 401) { logout(); throw new Error('Unauthorized'); }
+    if (resp.status === 401) {
+        logout();
+        throw new Error('Unauthorized');
+    }
     return resp;
 }
 
@@ -27,8 +32,12 @@ async function loadActiveShift() {
     if (resp.ok) {
         const shift = await resp.json();
         activeShiftId = shift.id;
+        activeShiftStart = shift.start_date;
+        activeShiftEnd = shift.end_date;
     } else {
         activeShiftId = null;
+        activeShiftStart = null;
+        activeShiftEnd = null;
     }
 }
 
@@ -37,7 +46,6 @@ async function loadUser() {
     if (resp.ok) {
         currentUser = await resp.json();
         if (currentUser.role === 'teacher') {
-            // загружаем его отряд
             const groupResp = await apiCall('/api/groups/my-group');
             if (groupResp.ok) {
                 const group = await groupResp.json();
@@ -81,7 +89,8 @@ window.login = async function() {
             await loadActiveShift();
             renderMain();
         } else {
-            errorDiv.innerText = 'Неверный email или пароль';
+            const err = await resp.text();
+            errorDiv.innerText = err || 'Неверный email или пароль';
         }
     } catch(err) {
         errorDiv.innerText = 'Ошибка соединения';
@@ -89,44 +98,38 @@ window.login = async function() {
 };
 
 function renderMain() {
-    // Если нет активной смены, всё равно показываем меню, но с предупреждением
     if (!activeShiftId) {
-        // Не возвращаем, а просто выводим предупреждение вверху
-        // Но меню строим всё равно
         console.warn("Нет активной смены. Некоторые функции могут быть ограничены.");
-        // Можно добавить баннер
     }
     const appDiv = document.getElementById('app');
     let navHtml = `<div class="container">
         <div class="user-info">
-            <span>?? ${escapeHtml(currentUser.full_name)} (${currentUser.role === 'admin' ? 'Администратор' : currentUser.role === 'org' ? 'Организатор' : currentUser.role === 'teacher' ? 'Вожатый' : currentUser.role})</span>
-            <button id="logoutBtn" class="logout-btn">?? Выйти</button>
+            <span>${escapeHtml(currentUser.full_name)} (${currentUser.role === 'admin' ? 'Администратор' : currentUser.role === 'org' ? 'Организатор' : currentUser.role === 'teacher' ? 'Вожатый' : currentUser.role})</span>
+            <button id="logoutBtn" class="logout-btn">Выйти</button>
         </div>
-        ${!activeShiftId ? '<div class="warning" style="background:#fef9c3; padding:8px; margin-bottom:16px;">?? Нет активной смены. Перейдите в "Смены" и создайте или активируйте смену.</div>' : ''}
+        ${!activeShiftId ? '<div class="warning" style="background:#fef9c3; padding:8px; margin-bottom:16px;">Нет активной смены. Перейдите в "Смены" и создайте или активируйте смену.</div>' : ''}
         <nav class="nav">`;
-    // Определяем доступные вкладки по роли
     if (currentUser.role === 'admin') {
-        navHtml += `<button class="tab-btn" data-tab="routine">? Режим дня</button>
-                    <button class="tab-btn" data-tab="activities">?? Мероприятия</button>
-                    <button class="tab-btn" data-tab="groups">?? Отряды</button>
-                    <button class="tab-btn" data-tab="children">?? Дети</button>
-                    <button class="tab-btn" data-tab="staff">????? Сотрудники</button>
-                    <button class="tab-btn" data-tab="attendance">? Отметить участие</button>
-                    <button class="tab-btn" data-tab="report">?? Отчёт</button>
-                    <button class="tab-btn" data-tab="shifts">?? Смены</button>`;
+        navHtml += `<button class="tab-btn" data-tab="routine">Режим дня</button>
+                    <button class="tab-btn" data-tab="activities">Мероприятия</button>
+                    <button class="tab-btn" data-tab="groups">Отряды</button>
+                    <button class="tab-btn" data-tab="children">Дети</button>
+                    <button class="tab-btn" data-tab="staff">Сотрудники</button>
+                    <button class="tab-btn" data-tab="attendance">Отметить участие</button>
+                    <button class="tab-btn" data-tab="report">Отчёт</button>
+                    <button class="tab-btn" data-tab="shifts">Смены</button>`;
     } else if (currentUser.role === 'org') {
-        navHtml += `<button class="tab-btn" data-tab="activities">?? Мероприятия (управление)</button>
-                    <button class="tab-btn" data-tab="groups">?? Отряды (управление)</button>
-                    <button class="tab-btn" data-tab="children">?? Дети (все)</button>
-                    <button class="tab-btn" data-tab="staff">????? Сотрудники</button>
-                    <button class="tab-btn" data-tab="report">?? Отчёт</button>`;
+        navHtml += `<button class="tab-btn" data-tab="activities">Мероприятия (управление)</button>
+                    <button class="tab-btn" data-tab="groups">Отряды (управление)</button>
+                    <button class="tab-btn" data-tab="children">Дети (все)</button>
+                    <button class="tab-btn" data-tab="staff">Сотрудники</button>
+                    <button class="tab-btn" data-tab="report">Отчёт</button>`;
     } else if (currentUser.role === 'teacher') {
-        navHtml += `<button class="tab-btn" data-tab="mygroup">?? Мой отряд</button>
-                    <button class="tab-btn" data-tab="attendance_teacher">? Отметить участие</button>
-                    <button class="tab-btn" data-tab="report_teacher">?? Отчёт по отряду</button>
-                    <button class="tab-btn" data-tab="schedule">?? Расписание</button>`;
+        navHtml += `<button class="tab-btn" data-tab="mygroup">Мой отряд</button>
+                    <button class="tab-btn" data-tab="attendance_teacher">Отметить участие</button>
+                    <button class="tab-btn" data-tab="report_teacher">Отчёт по отряду</button>
+                    <button class="tab-btn" data-tab="schedule">Расписание</button>`;
     }
-    
     navHtml += `</nav><div id="tab-content" class="tab-content">Загрузка...</div></div>`;
 
     appDiv.innerHTML = navHtml;
@@ -142,7 +145,6 @@ function renderMain() {
         });
     });
 
-    // Загружаем первую доступную вкладку
     const firstTab = document.querySelector('.tab-btn')?.dataset.tab;
     if (firstTab) loadTabContent(firstTab);
 }
@@ -157,7 +159,7 @@ function setActiveTab(tabId) {
 async function loadTabContent(tab) {
     const container = document.getElementById('tab-content');
     if (!container) return;
-    container.innerHTML = '<div class="loading">? Загрузка...</div>';
+    container.innerHTML = '<div class="loading">Загрузка...</div>';
     switch(tab) {
         case 'routine': await renderRoutine(container); break;
         case 'activities': await renderActivities(container); break;
@@ -181,12 +183,12 @@ async function renderRoutine(container) {
     const routines = await resp.json();
     let html = `<h2>Режим дня</h2>
         <div class="form-card">
-            <h3>? Добавить режимный момент</h3>
+            <h3>Добавить режимный момент</h3>
             <div class="form-group"><label>Название</label><input type="text" id="r_name"></div>
             <div class="form-group"><label>Время</label><input type="time" id="r_time"></div>
             <button id="createRoutineBtn">Создать</button>
         </div>
-        <h3>?? Список</h3>
+        <h3>Список</h3>
         <table><thead><tr><th>Название</th><th>Время</th><th>Действие</th></tr></thead><tbody>`;
     for (let r of routines) {
         html += `<tr><td>${escapeHtml(r.name)}</td><td>${r.time}</td><td><button class="danger" data-id="${r.id}" data-action="deleteRoutine">Удалить</button></td></tr>`;
@@ -194,18 +196,22 @@ async function renderRoutine(container) {
     html += `</tbody></table>`;
     container.innerHTML = html;
     document.getElementById('createRoutineBtn')?.addEventListener('click', async () => {
-        const name = document.getElementById('r_name').value;
+        const name = document.getElementById('r_name').value.trim();
         const time = document.getElementById('r_time').value;
-        if (!name || !time) return alert('Заполните поля');
+        if (!name || !time) return alert('Заполните название и время');
         const resp = await apiCall('/api/routines', { method: 'POST', body: JSON.stringify({ name, time, shift_id: activeShiftId }) });
         if (resp.ok) loadTabContent('routine');
-        else alert('Ошибка');
+        else {
+            const err = await resp.text();
+            alert(`Ошибка: ${err}`);
+        }
     });
     document.querySelectorAll('[data-action="deleteRoutine"]').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (confirm('Удалить?')) {
-                await apiCall(`/api/routines/${btn.dataset.id}`, { method: 'DELETE' });
-                loadTabContent('routine');
+                const resp = await apiCall(`/api/routines/${btn.dataset.id}`, { method: 'DELETE' });
+                if (resp.ok) loadTabContent('routine');
+                else alert('Ошибка удаления');
             }
         });
     });
@@ -220,45 +226,142 @@ async function renderActivities(container) {
     const activities = await actsResp.json();
     const groups = await groupsResp.json();
     const canEdit = currentUser.role === 'admin' || currentUser.role === 'org';
+    
+    const activityTypes = [
+        { value: "спорт", label: "Спорт" },
+        { value: "концерт", label: "Концерт" },
+        { value: "мастер-класс", label: "Мастер-класс" },
+        { value: "экскурсия", label: "Экскурсия" },
+        { value: "игра", label: "Игра" },
+        { value: "соревнование", label: "Соревнование" },
+        { value: "другое", label: "Другое" }
+    ];
+
+    const activityLocations = [
+        { value: "актовый зал", label: "Актовый зал" },
+        { value: "спортивная площадка", label: "Спортивная площадка" },
+        { value: "столовая", label: "Столовая" },
+        { value: "корпус отряда", label: "Корпус отряда" },
+        { value: "библиотека", label: "Библиотека" },
+        { value: "медицинский пункт", label: "Медицинский пункт" },
+        { value: "игровая комната", label: "Игровая комната" },
+        { value: "улица", label: "Улица" },
+        { value: "другое", label: "Другое" }
+    ];
+    
     let html = `<h2>Мероприятия</h2>`;
     if (canEdit) {
+        // Информация о допустимом диапазоне дат
+        let dateHint = '';
+
         html += `<div class="form-card">
-            <h3>? Добавить</h3>
+            <h3>Добавить</h3>
             <div class="form-group"><label>Название</label><input id="act_title"></div>
-            <div class="form-group"><label>Дата</label><input type="date" id="act_date"></div>
+            <div class="form-group"><label>Тип</label>
+                <select id="act_type">
+                    ${activityTypes.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group"><label>Дата</label>
+                <input type="date" id="act_date">
+                ${dateHint}
+            </div>
             <div class="form-group"><label>Время</label><input type="time" id="act_time"></div>
-            <div class="form-group"><label>Место</label><input id="act_location"></div>
+            <div class="form-group"><label>Место</label>
+                <select id="act_location">
+                    <option value="">-- Выберите место --</option>
+                    ${activityLocations.map(l => `<option value="${l.value}">${l.label}</option>`).join('')}
+                </select>
+            </div>
             <div class="checkbox-group" id="groups-checkboxes">`;
         for (let g of groups) {
             html += `<label><input type="checkbox" value="${g.id}" class="act-group-cb"> ${escapeHtml(g.name)}</label>`;
         }
         html += `</div><button id="createActivityBtn">Создать</button></div>`;
     }
-    html += `<h3>?? Список</h3><table><thead><tr><th>Название</th><th>Дата/Время</th><th>Место</th>${canEdit ? '<th>Действие</th>' : ''}</tr></thead><tbody>`;
+    html += `<h3>Список</h3>
+        <table>
+            <thead>
+                <tr><th>Название</th><th>Тип</th><th>Дата/Время</th><th>Место</th>${canEdit ? '<th>Действие</th>' : ''}</tr>
+            </thead>
+            <tbody>`;
     for (let a of activities) {
-        html += `<tr><td>${escapeHtml(a.title)}</td><td>${a.date} ${a.start_time}</td><td>${escapeHtml(a.location||'')}</td>${canEdit ? `<td><button class="danger" data-id="${a.id}" data-action="deleteActivity">Удалить</button></td>` : ''}</tr>`;
+        let typeLabel = a.type ? a.type.charAt(0).toUpperCase() + a.type.slice(1) : '';
+        html += `<tr>
+            <td>${escapeHtml(a.title)}</td>
+            <td>${escapeHtml(typeLabel)}</td>
+            <td>${a.date} ${a.start_time}</td>
+            <td>${escapeHtml(a.location || '')}</td>
+            ${canEdit ? `<td><button class="danger delete-activity" data-id="${a.id}">Удалить</button></td>` : ''}
+        </tr>`;
     }
-    html += `</tbody></table>`;
+    html += `</tbody>
+        </table>`;
     container.innerHTML = html;
+    
     if (canEdit) {
         document.getElementById('createActivityBtn')?.addEventListener('click', async () => {
-            const title = document.getElementById('act_title').value;
+            const title = document.getElementById('act_title').value.trim();
             const type = document.getElementById('act_type').value;
             const date = document.getElementById('act_date').value;
             const start_time = document.getElementById('act_time').value;
             const location = document.getElementById('act_location').value;
-            if (!title || !date || !start_time) return alert('Заполните обязательные поля');
-            const group_ids = Array.from(document.querySelectorAll('.act-group-cb:checked')).map(cb => parseInt(cb.value));
-            const resp = await apiCall('/api/activities', { method: 'POST', body: JSON.stringify({ title, type, date, start_time, location, shift_id: activeShiftId, group_ids }) });
-            if (resp.ok) loadTabContent('activities');
-            else alert('Ошибка');
-        });
-        document.querySelectorAll('[data-action="deleteActivity"]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (confirm('Удалить мероприятие?')) {
-                    await apiCall(`/api/activities/${btn.dataset.id}`, { method: 'DELETE' });
-                    loadTabContent('activities');
+
+            if (!title) return alert('Введите название мероприятия');
+            if (!date) return alert('Выберите дату');
+            if (!start_time) return alert('Выберите время');
+
+            // Проверка, что дата в пределах смены
+            if (activeShiftStart && activeShiftEnd) {
+                const selectedDate = new Date(date);
+                const shiftStart = new Date(activeShiftStart);
+                const shiftEnd = new Date(activeShiftEnd);
+                // Устанавливаем время в 00:00:00 для корректного сравнения
+                shiftStart.setHours(0,0,0,0);
+                shiftEnd.setHours(0,0,0,0);
+                if (selectedDate < shiftStart || selectedDate > shiftEnd) {
+                    alert(`Дата мероприятия должна быть в пределах смены (${activeShiftStart} – ${activeShiftEnd})`);
+                    return;
                 }
+            }
+
+            const group_ids = Array.from(
+                document.querySelectorAll('.act-group-cb:checked')
+            ).map(cb => parseInt(cb.value));
+
+            const body = {
+                title,
+                type,
+                date,
+                start_time,
+                location: location || null,
+                shift_id: activeShiftId,
+                group_ids
+            };
+
+            try {
+                const resp = await apiCall('/api/activities', {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+                if (resp.ok) {
+                    loadTabContent('activities');
+                } else {
+                    const err = await resp.json();
+                    alert(`Ошибка: ${err.detail || 'Не удалось создать мероприятие'}`);
+                }
+            } catch (err) {
+                alert('Ошибка соединения');
+            }
+        });
+
+        // Удаление мероприятий (было добавлено ранее)
+        document.querySelectorAll('.delete-activity').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Удалить мероприятие?')) return;
+                const resp = await apiCall(`/api/activities/${btn.dataset.id}`, { method: 'DELETE' });
+                if (resp.ok) loadTabContent('activities');
+                else alert('Ошибка удаления');
             });
         });
     }
@@ -268,209 +371,221 @@ async function renderActivities(container) {
 async function renderGroupsAdmin(container) {
     const groupsResp = await apiCall(`/api/groups?shift_id=${activeShiftId}`);
     const groups = await groupsResp.json();
-    let html = `<h2>Управление отрядами</h2>
+
+    let html = `
+        <h2>Управление отрядами</h2>
+
         <div class="form-card">
-            <h3>? Создать отряд</h3>
-            <div class="form-group"><label>Название</label><input id="group_name"></div>
-            <div class="form-group"><label>Возрастная группа</label><input id="group_age"></div>
+            <h3>Создать отряд</h3>
+
+            <div class="form-group">
+                <label>Название</label>
+                <input id="group_name">
+            </div>
+
+            <div class="form-group">
+                <label>Мин. возраст</label>
+                <input id="group_min_age" type="number" min="0">
+            </div>
+
+            <div class="form-group">
+                <label>Макс. возраст</label>
+                <input id="group_max_age" type="number" min="0">
+            </div>
+
             <button id="createGroupBtn">Создать</button>
         </div>
-        <h3>?? Существующие отряды</h3>`;
+
+        <h3>Существующие отряды</h3>
+    `;
+
     for (let g of groups) {
-        html += `<div style="border:1px solid #ccc; margin-bottom:10px; padding:10px;">
-            <strong>${escapeHtml(g.name)}</strong> (${g.age_range || ''})
-            <button class="danger" data-id="${g.id}" data-action="deleteGroup">Удалить отряд</button>
-            <button data-id="${g.id}" data-action="manageGroup">? Назначить детей / вожатых</button>
-            <div id="group-detail-${g.id}" style="display:none; margin-top:10px;"></div>
-        </div>`;
+        html += `
+            <div style="border:1px solid #ccc; margin-bottom:10px; padding:10px;">
+                <strong>${escapeHtml(g.name)}</strong>
+                (${g.min_age ?? '-'} - ${g.max_age ?? '-'})
+
+                <button class="danger" data-id="${g.id}" data-action="deleteGroup">
+                    Удалить отряд
+                </button>
+
+                <button data-id="${g.id}" data-action="manageGroup">
+                    Назначить детей / вожатых
+                </button>
+
+                <div id="group-detail-${g.id}" style="display:none; margin-top:10px;"></div>
+            </div>
+        `;
     }
+
     container.innerHTML = html;
+
     document.getElementById('createGroupBtn')?.addEventListener('click', async () => {
-        const name = document.getElementById('group_name').value;
-        if (!name) return alert('Введите название');
-        const age_range = document.getElementById('group_age').value;
-        const resp = await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name, age_range, shift_id: activeShiftId }) });
-        if (resp.ok) loadTabContent('groups');
-        else alert('Ошибка');
+        const name = document.getElementById('group_name').value.trim();
+        if (!name) return alert('Введите название отряда');
+        let min_age = document.getElementById('group_min_age').value;
+        let max_age = document.getElementById('group_max_age').value;
+
+        if (min_age && max_age && Number(min_age) > Number(max_age)) {
+            return alert('Максимальный возраст не может быть меньше минимального');
+        }
+
+        const body = {
+            name,
+            shift_id: activeShiftId,
+            min_age: min_age ? Number(min_age) : null,
+            max_age: max_age ? Number(max_age) : null
+        };
+
+        const resp = await apiCall('/api/groups', { method: 'POST', body: JSON.stringify(body) });
+        if (resp.ok) {
+            loadTabContent('groups');
+        } else {
+            const err = await resp.json();
+            alert(`Ошибка: ${err.detail || 'Не удалось создать отряд'}`);
+        }
     });
-    // Удаление отряда
+
     document.querySelectorAll('[data-action="deleteGroup"]').forEach(btn => {
         btn.addEventListener('click', async () => {
-            if (confirm('Удалить отряд? Дети останутся без отряда.')) {
-                await apiCall(`/api/groups/${btn.dataset.id}`, { method: 'DELETE' });
-                loadTabContent('groups');
-            }
+            if (!confirm('Удалить отряд? Дети останутся без отряда.')) return;
+            const resp = await apiCall(`/api/groups/${btn.dataset.id}`, { method: 'DELETE' });
+            if (resp.ok) loadTabContent('groups');
+            else alert('Ошибка удаления');
         });
     });
-    // Кнопка управления (просмотр и назначение детей и вожатых)
+
     document.querySelectorAll('[data-action="manageGroup"]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const groupId = btn.dataset.id;
             const detailDiv = document.getElementById(`group-detail-${groupId}`);
-            
             if (detailDiv.style.display === 'none') {
                 detailDiv.innerHTML = '<i>Загрузка данных...</i>';
                 detailDiv.style.display = 'block';
 
                 try {
-                    // 1. Получаем данные конкретного отряда
                     const groupResp = await apiCall(`/api/groups/${groupId}`);
-                    let groupData = {};
-                    if (groupResp.ok) {
-                        groupData = await groupResp.json();
-                    }
+                    const groupData = groupResp.ok ? await groupResp.json() : {};
+                    const groupChildren = groupData.children || [];
+                    const groupStaff = groupData.staff || [];
 
-                    // 2. Загружаем всех детей смены
                     const allChildrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}`);
-                    let freeChildren = [];
-                    let groupChildren = [];
-                    if (allChildrenResp.ok) {
-                        const allChildren = await allChildrenResp.json();
-                        freeChildren = allChildren.filter(c => !c.group_id);
-                        
-                        if (groupData.children && groupData.children.length > 0) {
-                            groupChildren = groupData.children;
-                        } else {
-                            groupChildren = allChildren.filter(c => c.group_id == groupId);
-                        }
-                    }
+                    const allChildren = allChildrenResp.ok ? await allChildrenResp.json() : [];
+                    const freeChildren = allChildren.filter(c =>
+                        !groupChildren.some(gc => gc.id === c.id)
+                    );
 
-                    // 3. Загружаем сотрудников
                     const staffResp = await apiCall(`/api/auth/users`);
-                    let staffList = [];
-                    let groupStaff = groupData.staff || []; 
-                    
-                    if (staffResp.ok) {
-                        const allStaff = await staffResp.json();
-                        staffList = allStaff.filter(s => s.role === 'teacher');
-                    }
+                    const allStaff = staffResp.ok ? await staffResp.json() : [];
+                    const staffList = allStaff.filter(s => s.role === 'teacher');
 
-                    // 4. Генерация списков (Дети)
-                    const childrenListHtml = groupChildren.length > 0 
-                        ? `<ul style="list-style: none; padding: 0;">
+                    const childrenListHtml = groupChildren.length
+                        ? `<ul style="list-style:none;padding:0;">
                             ${groupChildren.map(c => `
-                                <li style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                <li style="display:flex;justify-content:space-between;margin-bottom:5px;">
                                     ${escapeHtml(c.full_name)}
-                                    <button class="icon-btn danger" onclick="window.removeChildFromGroup(${groupId}, ${c.id})" title="Удалить из отряда" style="cursor: pointer; padding: 2px 5px;">?</button>
-                                </li>`).join('')}
-                           </ul>`
-                        : `<p style="color: gray; font-size: 0.9em;">В отряде пока нет детей.</p>`;
+                                    <button class="danger" onclick="window.removeChildFromGroup(${groupId}, ${c.id})">Удалить</button>
+                                </li>
+                            `).join('')}
+                        </ul>`
+                        : `<p>В отряде нет детей</p>`;
 
-                    // 5. Генерация списков (Вожатые)
-                    const staffListHtml = groupStaff.length > 0
-                        ? `<ul style="list-style: none; padding: 0;">
+                    const staffListHtml = groupStaff.length
+                        ? `<ul style="list-style:none;padding:0;">
                             ${groupStaff.map(s => `
-                                <li style="margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                <li style="display:flex;justify-content:space-between;margin-bottom:5px;">
                                     ${escapeHtml(s.full_name)}
-                                    <button class="icon-btn danger" onclick="window.removeStaffFromGroup(${groupId}, ${s.id})" title="Открепить вожатого" style="cursor: pointer; padding: 2px 5px;">?</button>
-                                </li>`).join('')}
-                           </ul>`
-                        : `<p style="color: gray; font-size: 0.9em;">Вожатые не назначены.</p>`;
+                                    <button class="danger" onclick="window.removeStaffFromGroup(${groupId}, ${s.id})">Удалить</button>
+                                </li>
+                            `).join('')}
+                        </ul>`
+                        : `<p>Вожатые не назначены</p>`;
 
-                    // 6. Отрисовываем интерфейс 
                     detailDiv.innerHTML = `
-                        <div style="display: flex; gap: 2rem; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
-                            <div style="flex: 1;">
-                                <h4 style="margin-top: 0;">????? Дети в отряде</h4>
+                        <div style="display:flex;gap:20px;margin-top:10px;border-top:1px solid #ccc;padding-top:10px;">
+                            <div style="flex:1;">
+                                <h4>Дети</h4>
                                 ${childrenListHtml}
-                                
-                                <div style="margin-top: 15px;">
-                                    <select id="child-select-${groupId}" style="width: 100%; margin-bottom: 5px;">
-                                        <option value="">-- Выберите ребёнка --</option>
-                                        ${freeChildren.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('')}
-                                    </select>
-                                    <button onclick="window.addChildToGroup(${groupId})" style="width: 100%;">Добавить ребёнка</button>
-                                </div>
+                                <select id="child-select-${groupId}" style="width:100%;margin-top:10px;">
+                                    <option value="">-- выбрать ребёнка --</option>
+                                    ${freeChildren.map(c => `<option value="${c.id}">${escapeHtml(c.full_name)}</option>`).join('')}
+                                </select>
+                                <button onclick="window.addChildToGroup(${groupId})">Добавить ребёнка</button>
                             </div>
-
-                            <div style="flex: 1;">
-                                <h4 style="margin-top: 0;">????? Вожатые отряда</h4>
+                            <div style="flex:1;">
+                                <h4>Вожатые</h4>
                                 ${staffListHtml}
-
-                                <div style="margin-top: 15px;">
-                                    <select id="staff-select-${groupId}" style="width: 100%; margin-bottom: 5px;">
-                                        <option value="">-- Выберите сотрудника --</option>
-                                        ${staffList.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}
-                                    </select>
-                                    <button onclick="window.assignStaffToGroup(${groupId})" style="width: 100%;">Назначить вожатого</button>
-                                </div>
+                                <select id="staff-select-${groupId}" style="width:100%;margin-top:10px;">
+                                    <option value="">-- выбрать сотрудника --</option>
+                                    ${staffList.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}
+                                </select>
+                                <button onclick="window.assignStaffToGroup(${groupId})">Назначить вожатого</button>
                             </div>
                         </div>
                     `;
-                } catch (error) {
+                } catch (err) {
                     detailDiv.innerHTML = `<p style="color:red;">Ошибка загрузки данных</p>`;
-                    console.error(error);
                 }
             } else {
                 detailDiv.style.display = 'none';
             }
         });
     });
-} // <-- Это конец функции renderGroupsAdmin
-
-// Ниже идут глобальные функции. Если у вас там лежат старые addChildToGroup, 
-// просто замените их все на этот блок:
+}
 
 window.addChildToGroup = async (groupId) => {
     const childId = document.getElementById(`child-select-${groupId}`).value;
-    if (!childId) return alert('Пожалуйста, выберите ребёнка из списка');
-    
-    const resp = await apiCall(`/api/groups/${groupId}/children`, { 
+    if (!childId) return alert('Выберите ребёнка');
+    const resp = await apiCall(`/api/groups/${groupId}/children`, {
         method: 'POST',
         body: JSON.stringify({ child_id: parseInt(childId) })
     });
-    
     if (resp.ok) {
         alert('Ребёнок добавлен в отряд');
         loadTabContent('groups');
     } else {
-        const errorData = await resp.json();
-        alert(`Ошибка при добавлении: ${errorData.detail || 'Неизвестная ошибка'}`);
+        const err = await resp.json();
+        alert(`Ошибка: ${err.detail || 'Не удалось добавить ребёнка'}`);
     }
 };
 
 window.assignStaffToGroup = async (groupId) => {
     const userId = document.getElementById(`staff-select-${groupId}`).value;
-    if (!userId) return alert('Пожалуйста, выберите сотрудника из списка');
-    
-    const resp = await apiCall(`/api/groups/${groupId}/staff`, { 
-        method: 'POST', 
-        body: JSON.stringify({ user_id: parseInt(userId) }) 
+    if (!userId) return alert('Выберите сотрудника');
+    const resp = await apiCall(`/api/groups/${groupId}/staff`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: parseInt(userId) })
     });
-    
     if (resp.ok) {
-        alert('Вожатый назначен на отряд');
+        alert('Вожатый назначен');
         loadTabContent('groups');
     } else {
-        const errorData = await resp.json();
-        alert(`Ошибка при назначении: ${errorData.detail || 'Неизвестная ошибка'}`);
+        const err = await resp.json();
+        alert(`Ошибка: ${err.detail || 'Не удалось назначить вожатого'}`);
     }
 };
 
 window.removeChildFromGroup = async (groupId, childId) => {
-    if (!confirm('Вы уверены, что хотите убрать ребёнка из этого отряда?')) return;
-    
+    if (!confirm('Убрать ребёнка из отряда?')) return;
     const resp = await apiCall(`/api/groups/${groupId}/children/${childId}`, { method: 'DELETE' });
-    if (resp.ok) {
-        loadTabContent('groups');
-    } else {
+    if (resp.ok) loadTabContent('groups');
+    else {
         const err = await resp.json();
-        alert(`Ошибка: ${err.detail || 'Не удалось удалить ребёнка'}`);
+        alert(`Ошибка: ${err.detail || 'Не удалось удалить'}`);
     }
 };
 
 window.removeStaffFromGroup = async (groupId, userId) => {
-    if (!confirm('Вы уверены, что хотите открепить этого вожатого от отряда?')) return;
-    
+    if (!confirm('Открепить вожатого?')) return;
     const resp = await apiCall(`/api/groups/${groupId}/staff/${userId}`, { method: 'DELETE' });
-    if (resp.ok) {
-        loadTabContent('groups');
-    } else {
+    if (resp.ok) loadTabContent('groups');
+    else {
         const err = await resp.json();
-        alert(`Ошибка: ${err.detail || 'Не удалось открепить вожатого'}`);
+        alert(`Ошибка: ${err.detail || 'Не удалось открепить'}`);
     }
 };
 
+// ----- ДЕТИ -----
 async function renderChildrenAll(container) {
     const resp = await apiCall(`/api/children?shift_id=${activeShiftId}`);
     const children = await resp.json();
@@ -478,15 +593,14 @@ async function renderChildrenAll(container) {
     let html = `<h2>Все дети</h2>`;
     if (canEdit) {
         html += `<div class="batch-actions">
-            <button id="batchDeleteBtn" class="danger" style="display:none;">??? Удалить выбранных</button>
-            <button id="selectAllBtn">? Выбрать всех</button>
-            <button id="clearAllBtn">? Снять все</button>
-            <button id="showAddChildFormBtn" style="background:#10b981;">? Добавить ребёнка</button>
+            <button id="batchDeleteBtn" class="danger" style="display:none;">Удалить выбранных</button>
+            <button id="selectAllBtn">Выбрать всех</button>
+            <button id="clearAllBtn">Снять все</button>
+            <button id="showAddChildFormBtn" style="background:#10b981;">Добавить ребёнка</button>
         </div>`;
     } else {
-        html += `<button id="showAddChildFormBtn">? Добавить ребёнка</button>`;
+        html += `<button id="showAddChildFormBtn">Добавить ребёнка</button>`;
     }
-    // Форма добавления
     html += `<div id="addChildForm" style="display:none;" class="form-card">
                 <h3>Новый ребёнок</h3>
                 <div class="form-group"><label>ФИО *</label><input id="child_full_name"></div>
@@ -497,7 +611,6 @@ async function renderChildrenAll(container) {
                 <button id="submitChildBtn">Сохранить</button>
                 <button id="cancelChildBtn" style="background:#64748b;">Отмена</button>
             </div>`;
-    // Таблица с чекбоксами для массового удаления
     html += `<div style="overflow-x:auto;">
         <table>
             <thead>
@@ -509,10 +622,8 @@ async function renderChildrenAll(container) {
                     ${canEdit ? '<th>Действие</th>' : ''}
                 </tr>
             </thead>
-            <tbody id="childrenTableBody">
-    `;
+            <tbody id="childrenTableBody">`;
     for (let c of children) {
-        // Упрощённое получение отряда – в реальности лучше сделать эндпоинт /children?include_group=true, но для демо оставим
         let groupName = '—';
         try {
             const groupResp = await apiCall(`/api/groups?child_id=${c.id}`);
@@ -526,9 +637,7 @@ async function renderChildrenAll(container) {
                     <td>${escapeHtml(c.full_name)}</td>
                     <td>${groupName}</td>
                     <td>${c.status}</td>
-                    ${canEdit ? `<td class="action-icons">
-                        <button class="icon-btn danger delete-one" data-id="${c.id}" data-name="${escapeHtml(c.full_name)}" title="Удалить">???</button>
-                    </td>` : ''}
+                    ${canEdit ? `<td class="action-icons"><button class="icon-btn danger delete-one" data-id="${c.id}" data-name="${escapeHtml(c.full_name)}">Удалить</button></td>` : ''}
                  </tr>`;
     }
     html += `</tbody>
@@ -538,32 +647,20 @@ async function renderChildrenAll(container) {
 
     if (!canEdit) return;
 
-    // --- Логика массового удаления ---
+    // Массовые операции
     const masterCheckbox = document.getElementById('masterCheckbox');
     const childCheckboxes = () => document.querySelectorAll('.child-checkbox');
     const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    
     function updateBatchButton() {
         const checked = document.querySelectorAll('.child-checkbox:checked').length;
-        if (checked > 0) {
-            batchDeleteBtn.style.display = 'inline-block';
-            batchDeleteBtn.innerText = `??? Удалить выбранных (${checked})`;
-        } else {
-            batchDeleteBtn.style.display = 'none';
-        }
+        batchDeleteBtn.style.display = checked ? 'inline-block' : 'none';
+        if (checked) batchDeleteBtn.innerText = `Удалить выбранных (${checked})`;
     }
-    
-    if (masterCheckbox) {
-        masterCheckbox.addEventListener('change', (e) => {
-            childCheckboxes().forEach(cb => cb.checked = e.target.checked);
-            updateBatchButton();
-        });
-    }
-    document.querySelectorAll('.child-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateBatchButton);
+    if (masterCheckbox) masterCheckbox.addEventListener('change', (e) => {
+        childCheckboxes().forEach(cb => cb.checked = e.target.checked);
+        updateBatchButton();
     });
-    
-    // Выделить всех / снять всех
+    childCheckboxes().forEach(cb => cb.addEventListener('change', updateBatchButton));
     document.getElementById('selectAllBtn')?.addEventListener('click', () => {
         childCheckboxes().forEach(cb => cb.checked = true);
         if (masterCheckbox) masterCheckbox.checked = true;
@@ -574,64 +671,51 @@ async function renderChildrenAll(container) {
         if (masterCheckbox) masterCheckbox.checked = false;
         updateBatchButton();
     });
-    
-    // Массовое удаление
     batchDeleteBtn?.addEventListener('click', async () => {
         const selectedIds = Array.from(childCheckboxes()).filter(cb => cb.checked).map(cb => parseInt(cb.value));
-        if (selectedIds.length === 0) return;
-        const confirmMsg = `Удалить ${selectedIds.length} ребёнка(ей)? Это действие нельзя отменить.`;
-        if (confirm(confirmMsg)) {
-            for (let id of selectedIds) {
-                await apiCall(`/api/children/${id}`, { method: 'DELETE' });
-            }
-            await loadTabContent('children'); // перезагружаем таблицу
+        if (!selectedIds.length) return;
+        if (!confirm(`Удалить ${selectedIds.length} ребёнка(ей)?`)) return;
+        for (let id of selectedIds) {
+            await apiCall(`/api/children/${id}`, { method: 'DELETE' });
         }
+        loadTabContent('children');
     });
-    
-    // Одиночное удаление с анимацией
     document.querySelectorAll('.delete-one').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (confirm(`Удалить ребёнка "${name}"?`)) {
-                const row = btn.closest('tr');
-                row.style.opacity = '0.5';
-                const resp = await apiCall(`/api/children/${id}`, { method: 'DELETE' });
-                if (resp.ok) {
-                    row.remove();
-                    // Если после удаления не осталось строк, покажем сообщение
-                    if (document.querySelectorAll('#childrenTableBody tr').length === 0) {
-                        document.getElementById('childrenTableBody').innerHTML = '<tr><td colspan="5">Нет детей</td></tr>';
-                    }
-                    updateBatchButton();
-                    if (masterCheckbox) masterCheckbox.checked = false;
-                } else {
-                    alert('Ошибка удаления');
-                    row.style.opacity = '1';
+            if (!confirm(`Удалить ребёнка "${name}"?`)) return;
+            const row = btn.closest('tr');
+            row.style.opacity = '0.5';
+            const resp = await apiCall(`/api/children/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                row.remove();
+                if (document.querySelectorAll('#childrenTableBody tr').length === 0) {
+                    document.getElementById('childrenTableBody').innerHTML = '<tr><td colspan="5">Нет детей</td</tr>';
                 }
+                updateBatchButton();
+                if (masterCheckbox) masterCheckbox.checked = false;
+            } else {
+                alert('Ошибка удаления');
+                row.style.opacity = '1';
             }
         });
     });
-    
-    // --- Форма добавления ---
+
+    // Добавление ребёнка
     const showBtn = document.getElementById('showAddChildFormBtn');
     const formDiv = document.getElementById('addChildForm');
     const cancelBtn = document.getElementById('cancelChildBtn');
-    showBtn.addEventListener('click', () => {
-        formDiv.style.display = formDiv.style.display === 'none' ? 'block' : 'none';
-    });
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            formDiv.style.display = 'none';
-        });
-    }
+    showBtn.addEventListener('click', () => { formDiv.style.display = formDiv.style.display === 'none' ? 'block' : 'none'; });
+    if (cancelBtn) cancelBtn.addEventListener('click', () => { formDiv.style.display = 'none'; });
     document.getElementById('submitChildBtn')?.addEventListener('click', async () => {
         const full_name = document.getElementById('child_full_name').value.trim();
         if (!full_name) return alert('ФИО обязательно');
         const birth_date = document.getElementById('child_birth_date').value || null;
-        const parent_phone = document.getElementById('child_parent_phone').value || null;
-        const parent_name = document.getElementById('child_parent_name').value || null;
-        const medical_notes = document.getElementById('child_medical_notes').value || null;
+        if (birth_date && new Date(birth_date) > new Date()) return alert('Дата рождения не может быть в будущем');
+        const parent_phone = document.getElementById('child_parent_phone').value.trim() || null;
+        const parent_name = document.getElementById('child_parent_name').value.trim() || null;
+        const medical_notes = document.getElementById('child_medical_notes').value.trim() || null;
         const body = { full_name, birth_date, parent_phone, parent_name, medical_notes, shift_id: activeShiftId, arrival_date: null, departure_date: null };
         const resp = await apiCall('/api/children', { method: 'POST', body: JSON.stringify(body) });
         if (resp.ok) {
@@ -641,14 +725,15 @@ async function renderChildrenAll(container) {
             document.getElementById('child_parent_phone').value = '';
             document.getElementById('child_parent_name').value = '';
             document.getElementById('child_medical_notes').value = '';
-            await loadTabContent('children');
+            loadTabContent('children');
         } else {
-            alert('Ошибка добавления');
+            const err = await resp.json();
+            alert(`Ошибка: ${err.detail || 'Не удалось добавить ребёнка'}`);
         }
     });
 }
 
-// ----- ОТМЕТКА УЧАСТИЯ для админа/орг (выбор мероприятия, всех детей) -----
+// ----- ОТМЕТКА УЧАСТИЯ (админ/орг) -----
 async function renderAttendanceAdmin(container) {
     const actsResp = await apiCall(`/api/activities?shift_id=${activeShiftId}`);
     const activities = await actsResp.json();
@@ -659,18 +744,20 @@ async function renderAttendanceAdmin(container) {
     document.getElementById('loadAttendanceBtn').addEventListener('click', async () => {
         const actId = document.getElementById('att_act_id').value;
         const resp = await apiCall(`/api/attendance/activity/${actId}`);
+        if (!resp.ok) { alert('Ошибка загрузки'); return; }
         const data = await resp.json();
-        let formHtml = `<form id="attForm"><table><tr><th>Ребёнок</th><th>Участвовал</th></tr>`;
+        let formHtml = `<form id="attForm"><tr><thead><tr><th>Ребёнок</th><th>Участвовал</th></tr></thead><tbody>`;
         for (let item of data) {
             formHtml += `<tr><td>${item.child_name}</td><td><input type="checkbox" data-child="${item.child_id}" ${item.participated ? 'checked' : ''}></td></tr>`;
         }
-        formHtml += `</table><button type="submit">Сохранить</button></form>`;
+        formHtml += `</tbody></table><button type="submit">Сохранить</button></form>`;
         document.getElementById('attendance-area').innerHTML = formHtml;
         document.getElementById('attForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const marks = Array.from(document.querySelectorAll('#attForm input[type="checkbox"]')).map(cb => ({ child_id: parseInt(cb.dataset.child), participated: cb.checked }));
-            await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
-            alert('Сохранено');
+            const saveResp = await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
+            if (saveResp.ok) alert('Сохранено');
+            else alert('Ошибка сохранения');
         });
     });
 }
@@ -680,7 +767,7 @@ async function renderMyGroup(container) {
     if (!myGroupId) { container.innerHTML = '<p>Вы не привязаны ни к одному отряду.</p>'; return; }
     const childrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}&group_id=${myGroupId}`);
     const children = await childrenResp.json();
-    let html = `<h2>Мой отряд (ID ${myGroupId})</h2><table><thead><tr><th>ФИО</th><th>Дата рождения</th><th>Телефон родителя</th></tr></thead><tbody>`;
+    let html = `<h2>Мой отряд (ID ${myGroupId})</h2></table><thead><tr><th>ФИО</th><th>Дата рождения</th><th>Телефон родителя</th></tr></thead><tbody>`;
     for (let c of children) {
         html += `<tr><td>${escapeHtml(c.full_name)}</td><td>${c.birth_date || ''}</td><td>${escapeHtml(c.parent_phone || '')}</td></tr>`;
     }
@@ -688,11 +775,10 @@ async function renderMyGroup(container) {
     container.innerHTML = html;
 }
 
-// ----- ВОЖАТЫЙ: отметка участия (только мероприятия, где участвует его отряд) -----
+// ----- ВОЖАТЫЙ: отметка участия -----
 async function renderAttendanceTeacher(container) {
     const actsResp = await apiCall(`/api/activities?shift_id=${activeShiftId}`);
     let activities = await actsResp.json();
-    // фильтруем мероприятия, в которых участвует его отряд
     const filtered = [];
     for (let act of activities) {
         const partResp = await apiCall(`/api/activities/${act.id}/groups`);
@@ -707,27 +793,27 @@ async function renderAttendanceTeacher(container) {
         const actId = document.getElementById('att_act_id_teacher').value;
         const resp = await apiCall(`/api/attendance/activity/${actId}`);
         let data = await resp.json();
-        // оставляем только детей из моего отряда
         const myChildrenResp = await apiCall(`/api/children?shift_id=${activeShiftId}&group_id=${myGroupId}`);
         const myChildren = await myChildrenResp.json();
         const myChildIds = new Set(myChildren.map(c => c.id));
         data = data.filter(item => myChildIds.has(item.child_id));
-        let formHtml = `<form id="attFormTeacher"><table><tr><th>Ребёнок</th><th>Участвовал</th></tr>`;
+        let formHtml = `<form id="attFormTeacher">能 table><thead><tr><th>Ребёнок</th><th>Участвовал</th></tr></thead><tbody>`;
         for (let item of data) {
             formHtml += `<tr><td>${item.child_name}</td><td><input type="checkbox" data-child="${item.child_id}" ${item.participated ? 'checked' : ''}></td></tr>`;
         }
-        formHtml += `</table><button type="submit">Сохранить</button></form>`;
+        formHtml += `</tbody></table><button type="submit">Сохранить</button></form>`;
         document.getElementById('attendance-area-teacher').innerHTML = formHtml;
         document.getElementById('attFormTeacher').addEventListener('submit', async (e) => {
             e.preventDefault();
             const marks = Array.from(document.querySelectorAll('#attFormTeacher input[type="checkbox"]')).map(cb => ({ child_id: parseInt(cb.dataset.child), participated: cb.checked }));
-            await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
-            alert('Сохранено');
+            const saveResp = await apiCall(`/api/attendance/activity/${actId}/batch`, { method: 'POST', body: JSON.stringify({ marks }) });
+            if (saveResp.ok) alert('Сохранено');
+            else alert('Ошибка сохранения');
         });
     });
 }
 
-// ----- ВОЖАТЫЙ: отчёт по своему отряду -----
+// ----- ВОЖАТЫЙ: отчёт -----
 async function renderReportTeacher(container) {
     container.innerHTML = `<h2>Отчёт по активности (мой отряд)</h2>
         <div class="form-group"><label>Дата от</label><input type="date" id="report_from"></div>
@@ -737,8 +823,10 @@ async function renderReportTeacher(container) {
     document.getElementById('generateTeacherReport').addEventListener('click', async () => {
         const date_from = document.getElementById('report_from').value;
         const date_to = document.getElementById('report_to').value;
+        if (!date_from || !date_to) return alert('Укажите обе даты');
         const body = { shift_id: activeShiftId, group_id: myGroupId, date_from, date_to };
         const resp = await apiCall('/api/reports/activity', { method: 'POST', body: JSON.stringify(body) });
+        if (!resp.ok) { alert('Ошибка формирования отчёта'); return; }
         const data = await resp.json();
         let html = `<table><thead><tr><th>Ребёнок</th><th>Посещено</th><th>Всего</th><th>%</th></tr></thead><tbody>`;
         for (let row of data) {
@@ -749,7 +837,7 @@ async function renderReportTeacher(container) {
     });
 }
 
-// ----- ВОЖАТЫЙ: расписание (режим дня + мероприятия) -----
+// ----- ВОЖАТЫЙ: расписание -----
 async function renderSchedule(container) {
     const [routinesResp, actsResp] = await Promise.all([
         apiCall(`/api/routines?shift_id=${activeShiftId}`),
@@ -757,7 +845,6 @@ async function renderSchedule(container) {
     ]);
     const routines = await routinesResp.json();
     let activities = await actsResp.json();
-    // фильтруем мероприятия для его отряда
     const filteredActs = [];
     for (let act of activities) {
         const partResp = await apiCall(`/api/activities/${act.id}/groups`);
@@ -770,7 +857,7 @@ async function renderSchedule(container) {
     container.innerHTML = html;
 }
 
-// ----- ОТЧЁТ для админа/орг (полный) -----
+// ----- ОТЧЁТ админ/орг -----
 async function renderReportAdmin(container) {
     const groupsResp = await apiCall(`/api/groups?shift_id=${activeShiftId}`);
     const groups = await groupsResp.json();
@@ -783,10 +870,12 @@ async function renderReportAdmin(container) {
     document.getElementById('generateReportAll').addEventListener('click', async () => {
         const date_from = document.getElementById('report_from').value;
         const date_to = document.getElementById('report_to').value;
+        if (!date_from || !date_to) return alert('Укажите обе даты');
         const group_id = document.getElementById('report_group').value;
         const body = { shift_id: activeShiftId, date_from, date_to };
         if (group_id) body.group_id = parseInt(group_id);
         const resp = await apiCall('/api/reports/activity', { method: 'POST', body: JSON.stringify(body) });
+        if (!resp.ok) { alert('Ошибка формирования отчёта'); return; }
         const data = await resp.json();
         let html = `<table><thead><tr><th>Ребёнок</th><th>Отряд</th><th>Посещено</th><th>Всего</th><th>%</th></tr></thead><tbody>`;
         for (let row of data) {
@@ -797,6 +886,7 @@ async function renderReportAdmin(container) {
     });
 }
 
+// ----- СОТРУДНИКИ -----
 async function renderStaff(container) {
     const resp = await apiCall('/api/auth/users');
     if (!resp.ok) {
@@ -807,14 +897,11 @@ async function renderStaff(container) {
     const canEdit = currentUser.role === 'admin';
 
     let html = `<h2>Сотрудники лагеря</h2>`;
-
     if (canEdit) {
         html += `<div class="batch-actions">
-            <button id="showAddStaffFormBtn" style="background:#10b981;">? Добавить сотрудника</button>
+            <button id="showAddStaffFormBtn" style="background:#10b981;">Добавить сотрудника</button>
         </div>`;
     }
-
-    // Форма добавления (скрыта)
     html += `<div id="addStaffForm" style="display:none;" class="form-card">
                 <h3>Новый сотрудник</h3>
                 <div class="form-group"><label>ФИО *</label><input id="staff_full_name"></div>
@@ -833,22 +920,12 @@ async function renderStaff(container) {
                 <button id="submitStaffBtn">Сохранить</button>
                 <button id="cancelStaffBtn" style="background:#64748b;">Отмена</button>
             </div>`;
-
-    // Таблица сотрудников (как в детях, но без чекбоксов)
     html += `<div style="overflow-x:auto;">
         <table class="data-table">
             <thead>
-                <tr>
-                    <th>ФИО</th>
-                    <th>Email</th>
-                    <th>Роль</th>
-                    <th>Должность</th>
-                    <th>Телефон</th>
-                    ${canEdit ? '<th>Действие</th>' : ''}
-                </tr>
+                <tr><th>ФИО</th><th>Email</th><th>Роль</th><th>Должность</th><th>Телефон</th>${canEdit ? '<th>Действие</th>' : ''}</tr>
             </thead>
             <tbody id="staffTableBody">`;
-
     for (let u of users) {
         html += `<tr data-user-id="${u.id}">
                     <td>${escapeHtml(u.full_name)}</td>
@@ -856,7 +933,7 @@ async function renderStaff(container) {
                     <td>${u.role}</td>
                     <td>${escapeHtml(u.position || '')}</td>
                     <td>${escapeHtml(u.phone || '')}</td>
-                    ${canEdit ? `<td class="action-icons"><button class="icon-btn danger delete-staff" data-id="${u.id}" data-name="${escapeHtml(u.full_name)}" title="Удалить">???</button></td>` : ''}
+                    ${canEdit ? `<td><button class="danger delete-staff" data-id="${u.id}" data-name="${escapeHtml(u.full_name)}">Удалить</button></td>` : ''}
                 </tr>`;
     }
     html += `</tbody>
@@ -866,76 +943,50 @@ async function renderStaff(container) {
 
     if (!canEdit) return;
 
-    // --- Управление формой добавления (как в детях) ---
     const showFormBtn = document.getElementById('showAddStaffFormBtn');
     const formDiv = document.getElementById('addStaffForm');
     const cancelBtn = document.getElementById('cancelStaffBtn');
-    if (showFormBtn) {
-        showFormBtn.addEventListener('click', () => {
-            formDiv.style.display = formDiv.style.display === 'none' ? 'block' : 'none';
-        });
-    }
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
+    showFormBtn?.addEventListener('click', () => { formDiv.style.display = formDiv.style.display === 'none' ? 'block' : 'none'; });
+    cancelBtn?.addEventListener('click', () => { formDiv.style.display = 'none'; });
+
+    document.getElementById('submitStaffBtn')?.addEventListener('click', async () => {
+        const full_name = document.getElementById('staff_full_name').value.trim();
+        const email = document.getElementById('staff_email').value.trim();
+        const password = document.getElementById('staff_password').value.trim();
+        if (!full_name || !email || !password) return alert('Заполните ФИО, Email и пароль');
+        const role = document.getElementById('staff_role').value;
+        const position = document.getElementById('staff_position').value.trim() || null;
+        const phone = document.getElementById('staff_phone').value.trim() || null;
+        const body = { full_name, email, password, role, position, phone };
+        const response = await apiCall('/api/auth/users', { method: 'POST', body: JSON.stringify(body) });
+        if (response.ok) {
+            alert('Сотрудник добавлен');
             formDiv.style.display = 'none';
-        });
-    }
+            document.getElementById('staff_full_name').value = '';
+            document.getElementById('staff_email').value = '';
+            document.getElementById('staff_password').value = '';
+            document.getElementById('staff_position').value = '';
+            document.getElementById('staff_phone').value = '';
+            loadTabContent('staff');
+        } else {
+            const err = await response.json();
+            alert(`Ошибка: ${err.detail || 'Не удалось добавить сотрудника'}`);
+        }
+    });
 
-    // --- Добавление сотрудника (как в детях, с очисткой формы) ---
-    const submitBtn = document.getElementById('submitStaffBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', async () => {
-            const full_name = document.getElementById('staff_full_name').value.trim();
-            const email = document.getElementById('staff_email').value.trim();
-            const password = document.getElementById('staff_password').value.trim();
-            if (!full_name || !email || !password) {
-                alert('Заполните ФИО, Email и пароль');
-                return;
-            }
-            const role = document.getElementById('staff_role').value;
-            const position = document.getElementById('staff_position').value || null;
-            const phone = document.getElementById('staff_phone').value || null;
-            const body = { full_name, email, password, role, position, phone };
-            const response = await apiCall('/api/auth/users', { method: 'POST', body: JSON.stringify(body) });
-            if (response.ok) {
-                alert('Сотрудник добавлен');
-                formDiv.style.display = 'none';
-                // Очистка формы
-                document.getElementById('staff_full_name').value = '';
-                document.getElementById('staff_email').value = '';
-                document.getElementById('staff_password').value = '';
-                document.getElementById('staff_position').value = '';
-                document.getElementById('staff_phone').value = '';
-                await loadTabContent('staff'); // перезагружаем таблицу
-            } else {
-                const errText = await response.text();
-                alert('Ошибка: ' + errText);
-            }
-        });
-    }
-
-    // --- Удаление сотрудника (одиночное, с анимацией как у детей) ---
     document.querySelectorAll('.delete-staff').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
             if (!confirm(`Удалить сотрудника "${name}"?`)) return;
             const row = btn.closest('tr');
-            // Анимация как у детей
-            row.style.transition = 'opacity 0.2s';
             row.style.opacity = '0.5';
             const delResp = await apiCall(`/api/auth/users/${id}`, { method: 'DELETE' });
             if (delResp.ok) {
-                row.style.transition = 'all 0.3s ease';
-                row.style.opacity = '0';
-                row.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    if (row && row.parentNode) row.remove();
-                    // Если таблица пуста – показать сообщение
-                    if (document.querySelectorAll('#staffTableBody tr').length === 0) {
-                        document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="6">Нет сотрудников</td</tr>';
-                    }
-                }, 200);
+                row.remove();
+                if (document.querySelectorAll('#staffTableBody tr').length === 0) {
+                    document.getElementById('staffTableBody').innerHTML = '<tr><td colspan="6">Нет сотрудников</td></tr>';
+                }
             } else {
                 alert('Ошибка удаления');
                 row.style.opacity = '1';
@@ -944,20 +995,20 @@ async function renderStaff(container) {
     });
 }
 
-// ----- УПРАВЛЕНИЕ СМЕНАМИ (только админ) -----
+// ----- СМЕНЫ -----
 async function renderShifts(container) {
     const resp = await apiCall('/api/shifts/');
     const shifts = await resp.json();
     let html = `<h2>Управление сменами</h2>
         <div class="form-card">
-            <h3>? Создать новую смену</h3>
+            <h3>Создать новую смену</h3>
             <div class="form-group"><label>Название</label><input id="shift_name" placeholder="Лето 2025"></div>
             <div class="form-group"><label>Дата начала</label><input type="date" id="shift_start"></div>
             <div class="form-group"><label>Дата окончания</label><input type="date" id="shift_end"></div>
             <div class="form-group"><label><input type="checkbox" id="shift_active"> Сделать активной</label></div>
             <button id="createShiftBtn">Создать</button>
         </div>
-        <h3>?? Список смен</h3>
+        <h3>Список смен</h3>
         <table>
             <thead><tr><th>ID</th><th>Название</th><th>Период</th><th>Активна</th><th>Действие</th></tr></thead>
             <tbody>`;
@@ -966,39 +1017,37 @@ async function renderShifts(container) {
             <td>${s.id}</td>
             <td>${escapeHtml(s.name)}</td>
             <td>${s.start_date} — ${s.end_date}</td>
-            <td>${s.is_active ? '? Да' : '? Нет'}</td>
+            <td>${s.is_active ? '✅ Да' : '❌ Нет'}</td>
             <td>
-                ${!s.is_active ? `<button class="activate-shift" data-id="${s.id}">?? Активировать</button>` : ''}
-                <button class="danger delete-shift" data-id="${s.id}" data-name="${escapeHtml(s.name)}">??? Удалить</button>
+                ${!s.is_active ? `<button class="activate-shift" data-id="${s.id}">Активировать</button>` : ''}
+                <button class="danger delete-shift" data-id="${s.id}" data-name="${escapeHtml(s.name)}">Удалить</button>
             </td>
         </tr>`;
     }
     html += `</tbody></table>`;
     container.innerHTML = html;
 
-    // Создание смены
     document.getElementById('createShiftBtn').addEventListener('click', async () => {
         const name = document.getElementById('shift_name').value.trim();
         const start_date = document.getElementById('shift_start').value;
         const end_date = document.getElementById('shift_end').value;
-        const is_active = document.getElementById('shift_active').checked;
         if (!name || !start_date || !end_date) return alert('Заполните все поля');
+        if (new Date(start_date) > new Date(end_date)) return alert('Дата начала не может быть позже даты окончания');
+        const is_active = document.getElementById('shift_active').checked;
         const resp = await apiCall('/api/shifts/', {
             method: 'POST',
             body: JSON.stringify({ name, start_date, end_date, is_active })
         });
         if (resp.ok) {
             await loadTabContent('shifts');
-            // Если создали активную смену, перезагрузим активную смену для всего приложения
             await loadActiveShift();
-            // Перестроим главное меню (чтобы обновилась активная смена)
             renderMain();
         } else {
-            alert('Ошибка создания');
+            const err = await resp.json();
+            alert(`Ошибка: ${err.detail || 'Не удалось создать смену'}`);
         }
     });
 
-    // Активация смены
     document.querySelectorAll('.activate-shift').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
@@ -1012,21 +1061,18 @@ async function renderShifts(container) {
         });
     });
 
-    // Удаление смены
     document.querySelectorAll('.delete-shift').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (confirm(`Удалить смену "${name}"? Все связанные данные (дети, отряды, мероприятия) будут удалены!`)) {
-                const resp = await apiCall(`/api/shifts/${id}`, { method: 'DELETE' });
-                if (resp.ok) {
-                    await loadTabContent('shifts');
-                    // Если удалили активную смену, возможно, больше нет активной
-                    await loadActiveShift();
-                    renderMain();
-                } else {
-                    alert('Ошибка удаления');
-                }
+            if (!confirm(`Удалить смену "${name}"? Все связанные данные будут удалены!`)) return;
+            const resp = await apiCall(`/api/shifts/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                await loadTabContent('shifts');
+                await loadActiveShift();
+                renderMain();
+            } else {
+                alert('Ошибка удаления');
             }
         });
     });
