@@ -44,6 +44,10 @@
 | teacher1@camp.ru | teacher123 |  Вожатый |
 | org@camp.ru | org123 | Организатор |
 
+## Курсовой отчет
+[CampPortal.pdf](https://github.com/user-attachments/files/28412143/CampPortal.pdf)
+
+
 ## Статус проекта
 
 Проект находится в разработке.
