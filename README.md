@@ -22,16 +22,23 @@
 
 ## Стек технологий
 
-- **Python 3.12** — основной язык серверной логики.
-- **FastAPI** — высокопроизводительный асинхронный веб-фреймворк для REST API.
-- **[PostgreSQL](DB.md/)** — надежная реляционная СУБД для хранения данных.
-- **SQLAlchemy (ORM)** — связующее звено между базой данных и объектами Python.
-- **Vanilla JS** — клиентская часть (SPA), реализованная на нативном JavaScript.
-- **JWT (JSON Web Token)** — безопасная аутентификация и хранение сессий в LocalStorage
+- **Vanilla JS**
+- **HTML/CSS**
+- **Fetch API**
+- **LocalStorage**
+- **Python 3.12**
+- **FastAPI**
+- **SQLAlchemy**
+- **PostgreSQL**
+- **Pydantic**
+- **JWT (Bearer token)**
+- **Uvicorn**
+- **Multiprocessing**
+- **psycopg2**
 
 ---
 
-## Минимальный функционал
+## Функционал
 
 - Авторизация пользователей
 - Главная панель
