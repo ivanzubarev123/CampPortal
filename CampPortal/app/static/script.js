@@ -585,6 +585,28 @@ window.removeStaffFromGroup = async (groupId, userId) => {
     }
 };
 
+function phoneMask(input) {
+    // Убираем все нецифры
+    let value = input.value.replace(/\D/g, '');
+    // Ограничиваем длину 11 цифрами
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    let formatted = '';
+    if (value.startsWith('7') || value.startsWith('8')) {
+        // Формат: +7 123 456 78 90
+        formatted = '+7 ';
+        let rest = value.slice(1);
+        if (rest.length > 0) formatted += rest.slice(0, 3);
+        if (rest.length >= 4) formatted += ' ' + rest.slice(3, 6);
+        if (rest.length >= 7) formatted += ' ' + rest.slice(6, 8);
+        if (rest.length >= 9) formatted += ' ' + rest.slice(8, 10);
+    } else if (value.length > 0) {
+        // Если начинается не с 7/8, просто выводим как есть с плюсом
+        formatted = '+' + value;
+    }
+    input.value = formatted;
+}
+
 // ----- ДЕТИ -----
 async function renderChildrenAll(container) {
     const resp = await apiCall(`/api/children?shift_id=${activeShiftId}`);
@@ -605,7 +627,9 @@ async function renderChildrenAll(container) {
                 <h3>Новый ребёнок</h3>
                 <div class="form-group"><label>ФИО *</label><input id="child_full_name"></div>
                 <div class="form-group"><label>Дата рождения</label><input type="date" id="child_birth_date"></div>
-                <div class="form-group"><label>Телефон родителя</label><input id="child_parent_phone"></div>
+                <div class="form-group"><label>Телефон родителя</label>
+                    <input type="tel" id="child_parent_phone" inputmode="tel" placeholder="+7 123 456 78 90">
+                </div>
                 <div class="form-group"><label>ФИО родителя</label><input id="child_parent_name"></div>
                 <div class="form-group"><label>Мед. особенности</label><input id="child_medical_notes"></div>
                 <button id="submitChildBtn">Сохранить</button>
@@ -644,6 +668,14 @@ async function renderChildrenAll(container) {
         </table>
         </div>`;
     container.innerHTML = html;
+
+    // --- Применяем маску телефона ---
+    const phoneInput = document.getElementById('child_parent_phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            phoneMask(this);
+        });
+    }
 
     if (!canEdit) return;
 
