@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.routes import routine
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routes import (
     auth, children, groups, activities,
@@ -11,6 +11,19 @@ from app.routes import (
 
 # 1. создаём app СРАЗУ
 app = FastAPI(title="Camp Management API")
+
+origins = [
+    "http://localhost:8000",
+    "https://campportal.onrender.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 2. templates и static
 templates = Jinja2Templates(directory="app/templates")
