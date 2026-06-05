@@ -948,7 +948,9 @@ async function renderStaff(container) {
                     </select>
                 </div>
                 <div class="form-group"><label>Должность</label><input id="staff_position"></div>
-                <div class="form-group"><label>Телефон</label><input id="staff_phone"></div>
+                <div class="form-group"><label>Телефон</label>
+                    <input type="tel" id="staff_phone" inputmode="tel" placeholder="+7 123 456 78 90">
+                </div>
                 <button id="submitStaffBtn">Сохранить</button>
                 <button id="cancelStaffBtn" style="background:#64748b;">Отмена</button>
             </div>`;
@@ -966,12 +968,20 @@ async function renderStaff(container) {
                     <td>${escapeHtml(u.position || '')}</td>
                     <td>${escapeHtml(u.phone || '')}</td>
                     ${canEdit ? `<td><button class="danger delete-staff" data-id="${u.id}" data-name="${escapeHtml(u.full_name)}">Удалить</button></td>` : ''}
-                </tr>`;
+                 </tr>`;
     }
     html += `</tbody>
         </table>
         </div>`;
     container.innerHTML = html;
+
+    // Применяем маску телефона для поля ввода (если оно есть)
+    const phoneInput = document.getElementById('staff_phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            phoneMask(this);
+        });
+    }
 
     if (!canEdit) return;
 
